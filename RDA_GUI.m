@@ -222,7 +222,7 @@ function [SCORE,COEFF,LATENT,EXPLAINED] = PCA(data)
 
 % PCA =====================================================
 
-[nChan,nPoints] = size(data);
+[nChan,nPoint] = size(data); %#ok<ASGLU>
 
 % Perform Singular Value Ddecomposition
 [u,s,v] = svd(data,0);
@@ -245,8 +245,8 @@ sgn            = sign(val);
 v              = v .* sgn;
 u              = u .* sgn;
 
-COEFF = v;                     % [nVolumes, nPCs]
-SCORE = u .* singular_values'; % [nVoxel  , nPCs]
+COEFF = v;                     % [nChan  , nPCs]
+SCORE = u .* singular_values'; % [nPoint , nPCs]
 
 end % function
 
@@ -453,7 +453,7 @@ try
             case 4 % 32Bit Data block
                 
                 % Read data and markers from message
-                [datahdr, data, markers] = RDA.ReadDataMessage(handles.con, hdr, props);
+                [datahdr, data, markers] = RDA.ReadDataMessage(handles.con, hdr, props); %#ok<ASGLU>
                 data = double(data);
                 
                 % check tcpip buffer overflow
@@ -483,13 +483,15 @@ try
                 nr_new_points = size(newACC,1);
                 rawACC = circshift(rawACC,-nr_new_points,1);
                 rawACC(end-nr_new_points+1 : end, : ) = newACC;
-                                
+                
                 if get(handles.checkbox_Filter,'Value')
-                    filtACC = ft_preproc_bandpassfilter( rawACC', props.samplingInterval, [0.05 20])';
+                    filtACC = ft_preproc_bandpassfilter( rawACC', props.samplingInterval, [0.05 20],4)';
+                else
+                    filtACC = rawACC;
                 end
                 
-                SCORE = PCA(filtACC);
-                compACC = SCORE(:,1);
+                PC = PCA(filtACC);
+                compACC = PC(:,1);
                 % compACC = mean(filtACC,2); % or average
                 
                 handles.tplot.YData = flipud(compACC);
