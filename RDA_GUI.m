@@ -2,8 +2,6 @@ function varargout = RDA_GUI
 % Run this function start a GUI that will handle the whole stimulation
 % process and parameters
 
-% global handles
-
 %% Open a singleton figure
 
 % Is the GUI already open ?
@@ -38,34 +36,34 @@ if isempty(figPtr) % Create the figure
     
     %% Graphic objects
     
-    % Graph
-    a_osci.x = 0.04;
-    a_osci.w = 0.45;
-    a_osci.y = 0.05 ;
-    a_osci.h = 0.85;
-    a_osci.tag = 'axes_Oscillo';
-    handles.(a_osci.tag) = axes('Parent',figHandle,...
-        'Tag',a_osci.tag,...
+    % timeDomain
+    a_timeDomain.x = 0.04;
+    a_timeDomain.w = 0.45;
+    a_timeDomain.y = 0.05 ;
+    a_timeDomain.h = 0.85;
+    a_timeDomain.tag = 'axes_timeDomain';
+    handles.(a_timeDomain.tag) = axes('Parent',figHandle,...
+        'Tag',a_timeDomain.tag,...
         'Units','Normalized',...
-        'Position',[ a_osci.x a_osci.y a_osci.w a_osci.h ]);
+        'Position',[ a_timeDomain.x a_timeDomain.y a_timeDomain.w a_timeDomain.h ]);
     
     
-    % Position
-    a_pos.x = a_osci.x + a_osci.w + 0.05;
-    a_pos.w = 0.45;
-    a_pos.y = a_osci.y ;
-    a_pos.h = a_osci.h;
-    a_pos.tag = 'axes_Position';
-    handles.(a_pos.tag) = axes('Parent',figHandle,...
-        'Tag',a_pos.tag,...
+    % freqDomain
+    a_freqDomain.x = a_timeDomain.x + a_timeDomain.w + 0.05;
+    a_freqDomain.w = 0.45;
+    a_freqDomain.y = a_timeDomain.y ;
+    a_freqDomain.h = a_timeDomain.h;
+    a_freqDomain.tag = 'axes_freqDomain';
+    handles.(a_freqDomain.tag) = axes('Parent',figHandle,...
+        'Tag',a_freqDomain.tag,...
         'Units','Normalized',...
-        'Position',[ a_pos.x a_pos.y a_pos.w a_pos.h ]);
+        'Position',[ a_freqDomain.x a_freqDomain.y a_freqDomain.w a_freqDomain.h ]);
     
     
     % IP adress
-    e_adr.x = a_osci.x;
+    e_adr.x = a_timeDomain.x;
     e_adr.w = 0.20;
-    e_adr.y = a_osci.y + a_osci.h + a_osci.y/2;
+    e_adr.y = a_timeDomain.y + a_timeDomain.h + a_timeDomain.y/2;
     e_adr.h = (1 - e_adr.y)*0.80;
     e_adr.tag = 'edit_Adress';
     handles.(e_adr.tag) = uicontrol(figHandle,...
@@ -131,6 +129,39 @@ if isempty(figPtr) % Create the figure
         'Visible','Off');
     
     
+    %% Default values
+    
+    fs          = 5000; % Hz
+    bufferSize  = 60; % seconds
+    displaySize = 10; % seconds
+    fftWindow   = 3;  % seconds
+    
+    
+    %% Setup graph
+    
+    handles.fs          = fs;
+    handles.displaySize = displaySize;
+    handles.fftWindow   = fftWindow;
+    
+    global rawACC %#ok<TLEV>
+    rawACC = zeros(displaySize*fs,3);
+    
+    % timeDomain
+    timeDomain.X = 1/fs:1/fs:displaySize;
+    timeDomain.Y = zeros(size(timeDomain.X));
+    handles.tplot = plot(handles.axes_timeDomain, timeDomain.X, timeDomain.Y);
+    handles.axes_timeDomain.XLabel.String = 'time (s)';
+    handles.axes_timeDomain.YLabel.String = 'amplitude (A.U.)';
+    
+    % freqDomain
+    [freqDomain.X, freqDomain.Y] = FFT(getWindow(timeDomain.Y',fs,fftWindow),fs);
+    handles.fplot = plot(handles.axes_freqDomain, freqDomain.X, freqDomain.Y);
+    handles.axes_freqDomain.XLabel.String = 'frequency (Hz)';
+    handles.axes_freqDomain.YLabel.String = 'Power (A.U.)';
+    handles.axes_freqDomain.XLim = [0 15];
+    handles.axes_freqDomain.XTick = 0:15;
+    
+    
     %% End of opening
     
     % IMPORTANT
@@ -143,9 +174,6 @@ if isempty(figPtr) % Create the figure
     % disp(handles)
     
     figPtr = figHandle;
-    
-    
-    %% Default values
     
     
 else % Figure exists so brings it to the focus
@@ -169,6 +197,58 @@ end % function
 
 %% GUI Functions
 
+% *************************************************************************
+function window = getWindow(data,fs,windowlength)
+
+window = data(end-fs*windowlength-1:end,:);
+
+end % function
+
+% *************************************************************************
+function [frequency,power] = FFT(signal,fs)
+
+L = length(signal);
+Y = fft(signal);
+P2 = abs(Y/L);
+P1 = P2(1:L/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+power = P1;
+frequency = fs*(0:(L/2))/L;
+
+end % function
+
+% *************************************************************************
+function [SCORE,COEFF,LATENT,EXPLAINED] = PCA(data)
+
+% PCA =====================================================
+
+[nChan,nPoints] = size(data);
+
+% Perform Singular Value Ddecomposition
+[u,s,v] = svd(data,0);
+
+% Singular values -> Eigen values
+singular_values = diag(s);
+eigen_values    = singular_values.^2/(nChan-1);
+LATENT          = eigen_values; % [nPCs, 1]
+
+% Eigen_values -> Variance explained
+vairance_explained = 100*eigen_values/sum(eigen_values); % in percent (%)
+EXPLAINED          = vairance_explained;                 % [nPCs, 1]
+
+% Sign convention : the max(abs(PCs)) is positive
+[~,maxabs_idx] = max(abs(v));
+[m,n]          = size(v);
+idx            = 0:m:(n-1)*m;
+val            = v(maxabs_idx + idx);
+sgn            = sign(val);
+v              = v .* sgn;
+u              = u .* sgn;
+
+COEFF = v;                     % [nVolumes, nPCs]
+SCORE = u .* singular_values'; % [nVoxel  , nPCs]
+
+end % function
 
 % *************************************************************************
 function edit_Adress_Callback(hObject, eventdata) %#ok<*INUSD>
@@ -209,9 +289,9 @@ switch get(hObject,'Value')
         % Establish connection to BrainVision Recorder Software 32Bit RDA-Port
         % (use 51234 to connect with 16Bit Port)
         handles.con = pnet('tcpconnect', recorderip, 51244);
-%         handles.con = pnet('tcpconnect', recorderip, 51234);
-% handles.con = tcpclient(''        
-
+        %         handles.con = pnet('tcpconnect', recorderip, 51234);
+        % handles.con = tcpclient(''
+        
         % Check established connection and display a message
         status = pnet(handles.con,'status');
         if status > 0
@@ -257,11 +337,6 @@ switch get(hObject,'Value')
     
     case 1
         
-        % Clear axes and ADC data
-        cla(handles.axes_Oscillo)
-        cla(handles.axes_Position)
-        drawnow
-        
         handles.RefreshPeriod = 0.010; % secondes
         
         handles.TimerHandle = timer(...
@@ -273,10 +348,11 @@ switch get(hObject,'Value')
             'ExecutionMode', 'fixedRate');
         
         guidata(hObject, handles);
-        start(handles.TimerHandle)
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
-        fprintf('Streaming ON ... \n')
+        fprintf('Streaming ON \n')
+        
+        start(handles.TimerHandle)
         
     case 0
         
@@ -290,7 +366,7 @@ switch get(hObject,'Value')
                 warning('GUI:Timer','Cannot delete the timer object. delete(timerfind) can clean all timers in the memory')
             end
             
-            fprintf('Streaming off \n')
+            fprintf('Streaming OFF \n')
             
         end
         
@@ -305,28 +381,23 @@ end % function
 
 % *************************************************************************
 function DoStream(hObject,eventdata,hFigure) %#ok<*INUSL>
+handles = guidata(hFigure);
 
 global props
 global lastBlock
-global unfilteredBuffer
-global filteredBuffer
 global ACC_X_idx
 global ACC_Y_idx
 global ACC_Z_idx
-% global Hd
-
-bufferSize = 5; % second
+global rawACC
 
 try
-    
-    handles = guidata(hFigure);
-    
     header_size = 24;
     
     % check for existing data in socket buffer
     tryheader = pnet(handles.con, 'read', header_size, 'byte', 'network', 'view', 'noblock');
+    stop = false;
     
-    while ~isempty(tryheader)
+    while ~isempty(tryheader) && ~stop
         
         % Read header of RDA message
         hdr = RDA.ReadHeader(handles.con);
@@ -339,12 +410,12 @@ try
                 
                 % Read and display properties
                 props = RDA.ReadStartMessage(handles.con, hdr);
+                handles.props = props;
                 disp(props);
                 
                 ACC_X_idx = strcmp(props.channelNames,'ACC_X');
                 ACC_Y_idx = strcmp(props.channelNames,'ACC_Y');
                 ACC_Z_idx = strcmp(props.channelNames,'ACC_Z');
-                
                 
                 if sum(ACC_X_idx) == 0
                     stop( handles.TimerHandle );
@@ -379,15 +450,11 @@ try
                 % Reset block counter to check overflows
                 lastBlock = -1;
                 
-                % Fill data buffer with zeros and plot first time to
-                % get handles
-                unfilteredBuffer = zeros( bufferSize * 1000000 / props.samplingInterval, 3);
-                filteredBuffer = unfilteredBuffer;
-                
             case 4 % 32Bit Data block
                 
                 % Read data and markers from message
                 [datahdr, data, markers] = RDA.ReadDataMessage(handles.con, hdr, props);
+                data = double(data);
                 
                 % check tcpip buffer overflow
                 if lastBlock ~= -1 && datahdr.block > lastBlock + 1
@@ -404,81 +471,32 @@ try
                 
                 % Process EEG data,
                 % in this case extract last recorded second,
-                EEGData = reshape(data, props.channelCount, length(data) / props.channelCount)';
-                EEGData = EEGData(:,[ACC_X_idx ACC_Y_idx ACC_Z_idx]); % save only the EOG channels
+                newACC = reshape(data, props.channelCount, length(data) / props.channelCount)';
+                newACC = newACC(:,[ACC_X_idx ACC_Y_idx ACC_Z_idx]); % save only the EOG channels
                 
                 % Apply scaling resolution
-                EEGData(:,1) = EEGData(:,1) * props.resolutions(ACC_X_idx);
-                EEGData(:,2) = EEGData(:,2) * props.resolutions(ACC_Y_idx);
-                EEGData(:,3) = EEGData(:,3) * props.resolutions(ACC_Z_idx);
+                newACC(:,1) = newACC(:,1) * props.resolutions(ACC_X_idx);
+                newACC(:,2) = newACC(:,2) * props.resolutions(ACC_Y_idx);
+                newACC(:,3) = newACC(:,3) * props.resolutions(ACC_Z_idx);
                 
-                filteredBuffer = [unfilteredBuffer ; EEGData];
-                filteredBuffer = filteredBuffer(end-length(unfilteredBuffer)+1 : end, : );
-                unfilteredBuffer = filteredBuffer;
-                
-                % PCA =====================================================
-                
-                [nChan,nPoints] = size(unfilteredBuffer);
-                
-                % Perform Singular Value Ddecomposition
-                [u,s,v] = svd(unfilteredBuffer,0);
-                
-                % Singular values -> Eigen values
-                singular_values = diag(s);
-                eigen_values    = singular_values.^2/(nChan-1);
-                LATENT          = eigen_values; % [nPCs, 1]
-                
-                % Eigen_values -> Variance explained
-                vairance_explained = 100*eigen_values/sum(eigen_values); % in percent (%)
-                EXPLAINED          = vairance_explained;                 % [nPCs, 1]
-                
-                % Sign convention : the max(abs(PCs)) is positive
-                [~,maxabs_idx] = max(abs(v));
-                [m,n]          = size(v);
-                idx            = 0:m:(n-1)*m;
-                val            = v(maxabs_idx + idx);
-                sgn            = sign(val);
-                v              = v .* sgn;
-                u              = u .* sgn;
-                
-                COEFF = v;                     % [nVolumes, nPCs]
-                SCORE = u .* singular_values'; % [nVoxel  , nPCs]
-                
-                filteredBuffer = SCORE(:,1);
-                
-                % =========================================================
-                
-                filteredBuffer = mean(unfilteredBuffer,2); % or average
-
+                % update
+                nr_new_points = size(newACC,1);
+                rawACC = circshift(rawACC,-nr_new_points,1);
+                rawACC(end-nr_new_points+1 : end, : ) = newACC;
+                                
                 if get(handles.checkbox_Filter,'Value')
-                    filteredBuffer = ft_preproc_bandpassfilter( filteredBuffer', props.samplingInterval, [0.05 20])';
+                    filtACC = ft_preproc_bandpassfilter( rawACC', props.samplingInterval, [0.05 20])';
                 end
-
-                % Amplitude : µV
-                time = (1:length(filteredBuffer(:,1)))*props.samplingInterval/(1000000);
-                time = fliplr(time); % for X tick labels
-%                 plot(handles.axes_Oscillo,time,filteredBuffer(:,1),'red',time,filteredBuffer(:,2),'blue',time,filteredBuffer(:,3),'green')
-                plot(handles.axes_Oscillo,time,filteredBuffer(:,1),'red')
-                set(handles.axes_Oscillo,'Xdir','reverse')
-                xlim(handles.axes_Oscillo,[0 bufferSize])
                 
-                signal = filteredBuffer(:,1);
-                fs     = 1/(props.samplingInterval/1000000);
+                SCORE = PCA(filtACC);
+                compACC = SCORE(:,1);
+                % compACC = mean(filtACC,2); % or average
                 
-                L = length(signal);
+                handles.tplot.YData = flipud(compACC);
                 
-                Y = fft(signal);
-                P2 = abs(Y/L);
-                P1 = P2(1:L/2+1);
-                P1(2:end-1) = 2*P1(2:end-1);
-                f = fs*(0:(L/2))/L;
-
-                plot(handles.axes_Position,f,P1)
-                xlabel(handles.axes_Position,'Frequency (Hz)')
-                ylabel(handles.axes_Position,'|Y(f)|')
-                
-%                 hold(handles.axes_Position,'off')
-                xlim(handles.axes_Position,[0 10])
+                windowACC = getWindow(compACC,handles.fs,handles.fftWindow);
+                [~,power] = FFT(windowACC,handles.fs);
+                handles.fplot.YData = power;
                 
             case 3       % Stop message
                 disp('Stop');
@@ -490,6 +508,7 @@ try
         end
         
         tryheader = pnet(handles.con, 'read', header_size, 'byte', 'network', 'view', 'noblock');
+        stop = ~get(handles.toggle_Stream,'Value') || ~get(handles.toggle_Connection,'Value') ;
         
     end
     
