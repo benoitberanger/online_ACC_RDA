@@ -2,12 +2,33 @@ function varargout = RDA_GUI
 % Run this function start a GUI that will handle the whole stimulation
 % process and parameters
 
+% debug=1 closes previous figure and reopens it, and send the gui handles
+% to base workspace.
+debug = 1;
+
+
 %% Open a singleton figure
 
 % Is the GUI already open ?
 figPtr = findall(0,'Tag',mfilename);
 
-if isempty(figPtr) % Create the figure
+% Force go the directory
+task_code_dir = fileparts(which(mfilename));
+cd(task_code_dir)
+
+if ~isempty(figPtr) % Figure exists so brings it to the focus
+    
+    figure(figPtr);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEBUG %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if debug
+        close(figPtr); %#ok<UNRCH>
+        RDA_GUI;
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+else % Create the figure
     
     clc
     rng('default')
@@ -34,7 +55,205 @@ if isempty(figPtr) % Create the figure
     handles.editBGcolor   = [1.0 1.0 1.0];
     
     
+    %% ====================================================================
     %% Graphic objects
+    %% ====================================================================
+    
+    
+    %% Panels
+    
+    panel_x_ratio = 0.2;
+    panel_y_ratio = 0.3;
+    
+    P_setup.x = 0;
+    P_setup.w =   panel_x_ratio;
+    P_setup.y = 1-panel_y_ratio;
+    P_setup.h =   panel_y_ratio;
+    handles.uipanel_Setup = uipanel(handles.(mfilename),...
+        'Title','Setup',...
+        'Units', 'Normalized',...
+        'Position',[P_setup.x P_setup.y P_setup.w P_setup.h],...
+        'BackgroundColor',handles.figureBGcolor );
+    
+    P_audio.x = 0;
+    P_audio.w =   panel_x_ratio;
+    P_audio.y = 0;
+    P_audio.h = 1-panel_y_ratio;
+    handles.uipanel_Audio = uipanel(handles.(mfilename),...
+        'Title','Audio',...
+        'Units', 'Normalized',...
+        'Position',[P_audio.x P_audio.y P_audio.w P_audio.h],...
+        'BackgroundColor',handles.figureBGcolor );
+    
+    P_graph.x =   panel_x_ratio;
+    P_graph.w = 1-panel_x_ratio;
+    P_graph.y = 0;
+    P_graph.h = 1;
+    handles.uipanel_Graph = uipanel(handles.(mfilename),...
+        'Title','Graph',...
+        'Units', 'Normalized',...
+        'Position',[P_graph.x P_graph.y P_graph.w P_graph.h],...
+        'BackgroundColor',handles.figureBGcolor );
+    
+    obj_x_offcet = 0.05;
+    obj_x_width  = 1 - 2*obj_x_offcet;
+    
+    
+    %% Panel : Setup
+    
+    %     [    ip    ] [connect]
+    %
+    %     subjectID
+    %     [                    ]
+    %
+    %     sessionID
+    %     [                    ]
+    %
+    %     Outputfile:
+    %     |                    |
+    
+    P_setup = Object_pos_width_dispatcher(...
+        [2 1 1  2 1 1  2 1 1  1],...
+        P_setup );
+    
+    
+    P_setup.count = P_setup.count+1;
+    Txt_fnameD.x = obj_x_offcet;
+    Txt_fnameD.w = obj_x_width;
+    Txt_fnameD.y = P_setup.pos  (P_setup.count);
+    Txt_fnameD.h = P_setup.width(P_setup.count);
+    Txt_fnameD.tag = 'text_fnameD';
+    handles.(Txt_fnameD.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','text',...
+        'Units', 'Normalized',...
+        'Position',[Txt_fnameD.x Txt_fnameD.y Txt_fnameD.w Txt_fnameD.h],...
+        'String','',...
+        'BackgroundColor',handles.figureBGcolor*1.1,...
+        'Visible','On');
+    
+    P_setup.count = P_setup.count+1;
+    Txt_fnameU.x = obj_x_offcet;
+    Txt_fnameU.w = obj_x_width;
+    Txt_fnameU.y = P_setup.pos  (P_setup.count);
+    Txt_fnameU.h = P_setup.width(P_setup.count);
+    Txt_fnameU.tag = 'text_fnameU';
+    handles.(Txt_fnameU.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','text',...
+        'Units', 'Normalized',...
+        'Position',[Txt_fnameU.x Txt_fnameU.y Txt_fnameU.w Txt_fnameU.h],...
+        'String','Last file name:',...
+        'BackgroundColor',handles.figureBGcolor,...
+        'Visible','On',...
+        'HorizontalAlignment','Left');
+    
+    % Empty space
+    P_setup.count = P_setup.count+1;
+    
+    % SessionID
+    P_setup.count = P_setup.count+1;
+    E_sessionID.x = obj_x_offcet;
+    E_sessionID.w = obj_x_width;
+    E_sessionID.y = P_setup.pos  (P_setup.count);
+    E_sessionID.h = P_setup.width(P_setup.count);
+    E_sessionID.tag = 'edit_sessionID';
+    handles.(E_sessionID.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','edit',...
+        'Units', 'Normalized',...
+        'Position',[E_sessionID.x E_sessionID.y E_sessionID.w E_sessionID.h],...
+        'String','',...
+        'BackgroundColor',handles.editBGcolor,...
+        'Visible','On',...
+        'HorizontalAlignment','Left',...
+        'Callback',@edit_GenerateFname_Callback);
+    
+    P_setup.count = P_setup.count+1;
+    Txt_sessionID.x = obj_x_offcet;
+    Txt_sessionID.w = obj_x_width;
+    Txt_sessionID.y = P_setup.pos  (P_setup.count);
+    Txt_sessionID.h = P_setup.width(P_setup.count);
+    Txt_sessionID.tag = 'text_sessionID';
+    handles.(Txt_sessionID.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','text',...
+        'Units', 'Normalized',...
+        'Position',[Txt_sessionID.x Txt_sessionID.y Txt_sessionID.w Txt_sessionID.h],...
+        'String','Session ID :',...
+        'BackgroundColor',handles.figureBGcolor,...
+        'Visible','On',...
+        'HorizontalAlignment','Left');
+    
+    % Empty space
+    P_setup.count = P_setup.count+1;
+    
+    % SubjectID
+    P_setup.count = P_setup.count+1;
+    E_subjectID.x = obj_x_offcet;
+    E_subjectID.w = obj_x_width;
+    E_subjectID.y = P_setup.pos  (P_setup.count);
+    E_subjectID.h = P_setup.width(P_setup.count);
+    E_subjectID.tag = 'edit_subjectID';
+    handles.(E_subjectID.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','edit',...
+        'Units', 'Normalized',...
+        'Position',[E_subjectID.x E_subjectID.y E_subjectID.w E_subjectID.h],...
+        'String','',...
+        'BackgroundColor',handles.editBGcolor,...
+        'Visible','On',...
+        'HorizontalAlignment','Left',...
+        'Callback',@edit_GenerateFname_Callback);
+    
+    P_setup.count = P_setup.count+1;
+    Txt_subjectID.x = obj_x_offcet;
+    Txt_subjectID.w = obj_x_width;
+    Txt_subjectID.y = P_setup.pos  (P_setup.count);
+    Txt_subjectID.h = P_setup.width(P_setup.count);
+    Txt_subjectID.tag = 'text_subjectID';
+    handles.(Txt_subjectID.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','text',...
+        'Units', 'Normalized',...
+        'Position',[Txt_subjectID.x Txt_subjectID.y Txt_subjectID.w Txt_subjectID.h],...
+        'String','Subject ID :',...
+        'BackgroundColor',handles.figureBGcolor,...
+        'Visible','On',...
+        'HorizontalAlignment','Left');
+    
+    % Empty space
+    P_setup.count = P_setup.count+1;
+    
+    % IP adress
+    P_setup.count = P_setup.count+1;
+    E_adr.x = obj_x_offcet;
+    E_adr.w = obj_x_width/2;
+    E_adr.y = P_setup.pos  (P_setup.count);
+    E_adr.h = P_setup.width(P_setup.count);
+    E_adr.tag = 'edit_Adress';
+    handles.(E_adr.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','edit',...
+        'Tag',E_adr.tag,...
+        'Units', 'Normalized',...
+        'Position',[E_adr.x E_adr.y E_adr.w E_adr.h],...
+        'BackgroundColor',handles.editBGcolor,...
+        'String','192.168.18.99',...
+        'Tooltip','IP adress',...
+        'Callback',@edit_Adress_Callback);
+    
+    % Connecion
+    T_con.x = obj_x_offcet + obj_x_width/2 + obj_x_offcet;
+    T_con.w =                obj_x_width/2 - obj_x_offcet;
+    T_con.y = P_setup.pos  (P_setup.count);
+    T_con.h = P_setup.width(P_setup.count);
+    T_con.tag = 'toggle_Connection';
+    handles.(T_con.tag) = uicontrol( handles.uipanel_Setup,...
+        'Style','toggle',...
+        'Tag',T_con.tag,...
+        'Units', 'Normalized',...
+        'Position',[T_con.x T_con.y T_con.w T_con.h],...
+        'BackgroundColor',handles.buttonBGcolor,...
+        'String','Connect',...
+        'Tooltip','Switch On/Off TCPIP connection',...
+        'Callback',@toggle_Connection_Callback);
+    
+    
+    %% Panel : Graph
     
     % timeDomain
     a_timeDomain.x = 0.04;
@@ -42,7 +261,7 @@ if isempty(figPtr) % Create the figure
     a_timeDomain.y = 0.05 ;
     a_timeDomain.h = 0.85;
     a_timeDomain.tag = 'axes_timeDomain';
-    handles.(a_timeDomain.tag) = axes('Parent',figHandle,...
+    handles.(a_timeDomain.tag) = axes('Parent',handles.uipanel_Graph,...
         'Tag',a_timeDomain.tag,...
         'Units','Normalized',...
         'Position',[ a_timeDomain.x a_timeDomain.y a_timeDomain.w a_timeDomain.h ]);
@@ -54,7 +273,7 @@ if isempty(figPtr) % Create the figure
     a_freqDomain.y = a_timeDomain.y ;
     a_freqDomain.h = a_timeDomain.h;
     a_freqDomain.tag = 'axes_freqDomain';
-    handles.(a_freqDomain.tag) = axes('Parent',figHandle,...
+    handles.(a_freqDomain.tag) = axes('Parent',handles.uipanel_Graph,...
         'Tag',a_freqDomain.tag,...
         'Units','Normalized',...
         'Position',[ a_freqDomain.x a_freqDomain.y a_freqDomain.w a_freqDomain.h ]);
@@ -66,7 +285,7 @@ if isempty(figPtr) % Create the figure
     e_adr.y = a_timeDomain.y + a_timeDomain.h + a_timeDomain.y/2;
     e_adr.h = (1 - e_adr.y)*0.80;
     e_adr.tag = 'edit_Adress';
-    handles.(e_adr.tag) = uicontrol(figHandle,...
+    handles.(e_adr.tag) = uicontrol(handles.uipanel_Graph,...
         'Style','edit',...
         'Tag',e_adr.tag,...
         'Units', 'Normalized',...
@@ -83,7 +302,7 @@ if isempty(figPtr) % Create the figure
     t_con.y = e_adr.y;
     t_con.h = e_adr.h;
     t_con.tag = 'toggle_Connection';
-    handles.(t_con.tag) = uicontrol(figHandle,...
+    handles.(t_con.tag) = uicontrol(handles.uipanel_Graph,...
         'Style','toggle',...
         'Tag',t_con.tag,...
         'Units', 'Normalized',...
@@ -100,7 +319,7 @@ if isempty(figPtr) % Create the figure
     t_stream.y = e_adr.y;
     t_stream.h = e_adr.h;
     t_stream.tag = 'toggle_Stream';
-    handles.(t_stream.tag) = uicontrol(figHandle,...
+    handles.(t_stream.tag) = uicontrol(handles.uipanel_Graph,...
         'Style','toggle',...
         'Tag',t_stream.tag,...
         'Units', 'Normalized',...
@@ -117,7 +336,7 @@ if isempty(figPtr) % Create the figure
     c_filter.y = e_adr.y;
     c_filter.h = e_adr.h;
     c_filter.tag = 'checkbox_Filter';
-    handles.(c_filter.tag) = uicontrol(figHandle,...
+    handles.(c_filter.tag) = uicontrol(handles.uipanel_Graph,...
         'Style','checkbox',...
         'Tag',c_filter.tag,...
         'Units', 'Normalized',...
@@ -173,15 +392,16 @@ if isempty(figPtr) % Create the figure
     % assignin('base','handles',handles)
     % disp(handles)
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEBUG %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if debug
+        assignin('base','handles',handles) %#ok<UNRCH>
+        disp(handles)
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
     figPtr = figHandle;
     
-    
-else % Figure exists so brings it to the focus
-    
-    figure(figPtr);
-    
-    close(figPtr);
-    RDA_GUI;
     
 end
 
@@ -196,6 +416,43 @@ end % function
 
 
 %% GUI Functions
+
+% -------------------------------------------------------------------------
+function edit_GenerateFname_Callback(hObject, eventdata)
+handles = guidata(hObject);
+
+subjectID = handles.edit_subjectID.String; % fetch the field in the GUI
+sessionID = handles.edit_sessionID.String; % fetch the field in the GUI
+
+timestamp = datestr(now, 30); % it looks like "20200625T184209"
+
+data_dir = fullfile( fileparts(fileparts(mfilename('fullpath'))), 'data' );
+
+% Generate & save fname
+fname = fullfile(data_dir,...
+    [timestamp '__' subjectID '__' sessionID '.mat']); % generate
+handles.fname = fname;                                 % save it in the GUI main variable
+handles.text_fnameD.String = fname;                    % show it in the GUI
+
+guidata(hObject, handles);
+end % function
+
+% -------------------------------------------------------------------------
+function obj = Object_pos_width_dispatcher( vect , obj )
+
+obj.vect  = vect; % relative proportions of each panel, from left to right
+
+obj.vectLength    = length(obj.vect);
+obj.vectTotal     = sum(obj.vect);
+obj.adjustedTotal = obj.vectTotal + 1;
+obj.unitWidth     = 1/obj.adjustedTotal;
+obj.interWidth    = obj.unitWidth/obj.vectLength;
+
+obj.count  = 0;
+obj.pos   = @(count) obj.unitWidth*sum(obj.vect(1:(count-1))) + 0.8*count*obj.interWidth;
+obj.width = @(count) obj.vect(count)*obj.unitWidth;
+
+end % function
 
 % *************************************************************************
 function window = getWindow(data,fs,windowlength)
@@ -485,7 +742,7 @@ try
                 rawACC(end-nr_new_points+1 : end, : ) = newACC;
                 
                 if get(handles.checkbox_Filter,'Value')
-%                     filtACC = ft_preproc_bandpassfilter( rawACC', handles.fs, [0.1 20],4)';
+                    %                     filtACC = ft_preproc_bandpassfilter( rawACC', handles.fs, [0.1 20],4)';
                     filtACC = ft_preproc_highpassfilter( rawACC', handles.fs, 1, 4 )';
                 else
                     filtACC = rawACC;
