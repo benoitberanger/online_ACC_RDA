@@ -158,8 +158,8 @@ if isempty(figPtr) % Create the figure
     handles.fplot = plot(handles.axes_freqDomain, freqDomain.X, freqDomain.Y);
     handles.axes_freqDomain.XLabel.String = 'frequency (Hz)';
     handles.axes_freqDomain.YLabel.String = 'Power (A.U.)';
-    handles.axes_freqDomain.XLim = [0 15];
-    handles.axes_freqDomain.XTick = 0:15;
+    handles.axes_freqDomain.XLim = [0 30];
+    handles.axes_freqDomain.XTick = 0:30;
     
     
     %% End of opening
@@ -485,7 +485,8 @@ try
                 rawACC(end-nr_new_points+1 : end, : ) = newACC;
                 
                 if get(handles.checkbox_Filter,'Value')
-                    filtACC = ft_preproc_bandpassfilter( rawACC', props.samplingInterval, [0.05 20],4)';
+%                     filtACC = ft_preproc_bandpassfilter( rawACC', handles.fs, [0.1 20],4)';
+                    filtACC = ft_preproc_highpassfilter( rawACC', handles.fs, 1, 4 )';
                 else
                     filtACC = rawACC;
                 end
