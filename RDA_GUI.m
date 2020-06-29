@@ -6,8 +6,9 @@ function varargout = RDA_GUI
 % to base workspace.
 debug = 1;
 
-
+%% ====================================================================
 %% Open a singleton figure
+%% ====================================================================
 
 % Is the GUI already open ?
 figPtr = findall(0,'Tag',mfilename);
@@ -289,7 +290,7 @@ else % Create the figure
         'String','Repos',...
         'BackgroundColor',handles.buttonBGcolor*0.9,...
         'Tag',B_rest.tag,...
-        'Callback',@pushbutton_Rest,...
+        'Callback',@pushbutton_SendAudio_Callback,...
         'Visible','Off');
     
     % Empty space
@@ -309,7 +310,7 @@ else % Create the figure
         'String','Posture',...
         'BackgroundColor',handles.buttonBGcolor*0.9,...
         'Tag',B_posture.tag,...
-        'Callback',@pushbutton_Posture,...
+        'Callback',@pushbutton_SendAudio_Callback,...
         'Visible','Off');
     
     % Empty space
@@ -329,7 +330,7 @@ else % Create the figure
         'String','TestAudio',...
         'BackgroundColor',handles.buttonBGcolor*0.9,...
         'Tag',B_testaudio.tag,...
-        'Callback',@pushbutton_TestAudio,...
+        'Callback',@pushbutton_SendAudio_Callback,...
         'Visible','Off');
     
     % TestParPort
@@ -346,7 +347,7 @@ else % Create the figure
         'String','TestParPort',...
         'BackgroundColor',handles.buttonBGcolor*0.9,...
         'Tag',B_testpp.tag,...
-        'Callback',@pushbutton_TestParPort,...
+        'Callback',@pushbutton_TestParPort_Callback,...
         'Visible','Off');
     
     
@@ -595,8 +596,48 @@ end
 
 end % function
 
-
+%% ====================================================================
 %% GUI Functions
+%% ====================================================================
+
+% *************************************************************************
+function pushbutton_TestParPort_Callback(hObject, eventdata)
+handles = guidata(hObject);
+
+for i = 0 : 7
+    msg = 2^i;
+    WriteParPort(msg);
+    fprintf('[%s]: writing %d \n', 'TestParPort', msg);
+    WaitSecs(0.050); % 50 ms
+end
+
+guidata(hObject, handles);
+end % function
+
+% -------------------------------------------------------------------------
+function pushbutton_SendAudio_Callback(hObject, eventdata)
+handles = guidata(hObject);
+
+switch eventdata.Source.Tag
+    case 'pushbutton_TestAudio'
+        content = handles.test_son;
+        msg     = 77;
+    case 'pushbutton_Posture'
+        content = handles.posture;
+        msg     = 11;
+    case 'pushbutton_Rest'
+        content = handles.repos;
+        msg     = 12;
+    otherwise
+        error('???')
+end
+
+PsychPortAudio('FillBuffer', handles.Playback_pahandle, content);
+PsychPortAudio('Start'     , handles.Playback_pahandle, [], [], 1);
+WriteParPort(msg);
+
+guidata(hObject, handles);
+end % function
 
 % -------------------------------------------------------------------------
 function uipanel_AudioOnOff_SelectionChangeFcn(hObject, eventdata)
@@ -604,13 +645,63 @@ handles = guidata(hObject);
 
 switch eventdata.NewValue.Tag
     case 'radiobutton_Audio_On'
+        
+        try
+            
+            % Perform basic initialization of the sound driver
+            InitializePsychSound(1);
+            
+            % Close the audio device
+            PsychPortAudio('Close')
+            
+            % Sampling frequency of the output
+            freq = 44100;
+            
+            % Playback device initialization
+            handles.Playback_pahandle = PsychPortAudio('Open', [],...
+                1,...     % 1 = playback, 2 = record
+                1,...     % {0,1,2,3,4}
+                freq,...  % Hz
+                2);       % 1 = mono, 2 = stereo
+            
+            task_code_dir = fileparts(which(mfilename));
+            
+            for sound = {'test_son','posture','repos'}
+                
+                % Load
+                [content,fs] = audioread( fullfile(task_code_dir,'wav', [char(sound) '.wav']) );
+                N = length(content);
+                
+                % Normalize to -1 +1
+                content = content / max(abs(content));
+                
+                % Resample @ output frequency
+                content = interp1( (1:N)/fs, content, (1:N/fs*freq)/freq, 'pchip' );
+                
+                % Save
+                handles.(char(sound)) = [content(:) content(:)]' ; % Need 1 lign per channel
+                
+            end
+            
+        catch err
+            rethrow(err)
+        end
+        
         handles.pushbutton_TestAudio.Visible = 'On';
         handles.pushbutton_Posture.  Visible = 'On';
         handles.pushbutton_Rest.     Visible = 'On';
+        
     case 'radiobutton_Audio_Off'
+        
+        % Close the audio device
+        PsychPortAudio('Close')
+        handles = rmfield(handles, 'Playback_pahandle');
+        fprintf('Closed all audio devices \n');
+        
         handles.pushbutton_TestAudio.Visible = 'Off';
         handles.pushbutton_Posture.  Visible = 'Off';
         handles.pushbutton_Rest.     Visible = 'Off';
+        
 end
 
 guidata(hObject, handles);
@@ -622,9 +713,22 @@ handles = guidata(hObject);
 
 switch eventdata.NewValue.Tag
     case 'radiobutton_ParPort_On'
+        
+        % Open or rollback
+        try
+            OpenParPort();
+            WriteParPort(0);
+        catch err
+            rethrow(err)
+        end
+        
         handles.pushbutton_TestParPort.Visible = 'On';
+        
     case 'radiobutton_ParPort_Off'
+        
+        CloseParPort();
         handles.pushbutton_TestParPort.Visible = 'Off';
+        
 end
 
 guidata(hObject, handles);
