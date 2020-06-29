@@ -4,7 +4,7 @@ function varargout = RDA_GUI
 
 % debug=1 closes previous figure and reopens it, and send the gui handles
 % to base workspace.
-debug = 1;
+debug = 0;
 
 %% ====================================================================
 %% Open a singleton figure
@@ -519,16 +519,17 @@ else % Create the figure
         'BackgroundColor',handles.figureBGcolor,...
         'String','Filter',...
         'Tooltip','Switch On/Off the filter',...
-        'Value',1,...
+        'Value',0,...
         'Visible','Off');
     
     
     %% Default values
     
     fs          = 5000; % Hz
+    
     bufferSize  = 60; % seconds
     displaySize = 10; % seconds
-    fftWindow   = 3;  % seconds
+    fftWindow   =  1; % seconds
     
     
     %% Setup graph
@@ -537,8 +538,9 @@ else % Create the figure
     handles.displaySize = displaySize;
     handles.fftWindow   = fftWindow;
     
-    global rawACC %#ok<TLEV>
-    rawACC = zeros(displaySize*fs,3);
+    global rawACC ratio_power%#ok<TLEV>
+    rawACC      = zeros(displaySize*fs,3);
+    ratio_power = zeros(displaySize*fs,1);
     
     % timeDomain
     timeDomain.X = 1/fs:1/fs:displaySize;
@@ -546,6 +548,7 @@ else % Create the figure
     handles.tplot = plot(handles.axes_timeDomain, timeDomain.X, timeDomain.Y);
     handles.axes_timeDomain.XLabel.String = 'time (s)';
     handles.axes_timeDomain.YLabel.String = 'amplitude (A.U.)';
+    handles.axes_timeDomain.YLim = [0 4000];
     
     % powerDomain
     powerDomain.X = timeDomain.X;
@@ -553,14 +556,16 @@ else % Create the figure
     handles.pplot = plot(handles.axes_powerDomain, powerDomain.X, powerDomain.Y);
     handles.axes_powerDomain.XLabel.String = 'time (s)';
     handles.axes_powerDomain.YLabel.String = 'power[4-6]Hz ratio';
+    handles.axes_powerDomain.YLim = [0 0.5];
     
     % freqDomain
     [freqDomain.X, freqDomain.Y] = FFT(getWindow(timeDomain.Y',fs,fftWindow),fs);
     handles.fplot = plot(handles.axes_freqDomain, freqDomain.X, freqDomain.Y);
     handles.axes_freqDomain.XLabel.String = 'frequency (Hz)';
     handles.axes_freqDomain.YLabel.String = 'Power (A.U.)';
-    handles.axes_freqDomain.XLim = [0 30];
-    handles.axes_freqDomain.XTick = 0:30;
+    handles.axes_freqDomain.XLim  = [1 30];
+    handles.axes_freqDomain.XTick =  1:30;
+    handles.axes_freqDomain.YLim  = [0 1000];
     
     
     %% End of opening
@@ -635,6 +640,8 @@ end
 PsychPortAudio('FillBuffer', handles.Playback_pahandle, content);
 PsychPortAudio('Start'     , handles.Playback_pahandle, [], [], 1);
 WriteParPort(msg);
+WaitSecs(0.005);
+WriteParPort(0);
 
 guidata(hObject, handles);
 end % function
@@ -877,7 +884,7 @@ switch get(hObject,'Value')
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
         set(handles.toggle_Stream,'Visible','On')
-        set(handles.checkbox_Filter,'Visible','On')
+        set(handles.checkbox_Filter,'Visible','Off')
         
     case 0
         
@@ -963,6 +970,7 @@ global ACC_X_idx
 global ACC_Y_idx
 global ACC_Z_idx
 global rawACC
+global ratio_power
 
 try
     header_size = 24;
@@ -1058,22 +1066,33 @@ try
                 rawACC = circshift(rawACC,-nr_new_points,1);
                 rawACC(end-nr_new_points+1 : end, : ) = newACC;
                 
+                filtACC = rawACC;
                 if get(handles.checkbox_Filter,'Value')
-                    %                     filtACC = ft_preproc_bandpassfilter( rawACC', handles.fs, [0.1 20],4)';
-                    filtACC = ft_preproc_highpassfilter( rawACC', handles.fs, 1, 4 )';
-                else
-                    filtACC = rawACC;
+                    % filtACC = ft_preproc_bandpassfilter( newACC', handles.fs, [1 15],2)';
+                    filtACC = ft_preproc_highpassfilter( filtACC', handles.fs, 1, 4 )';
                 end
                 
-                PC = PCA(filtACC);
-                compACC = PC(:,1);
-                % compACC = mean(filtACC,2); % or average
+                %PC = PCA(filtACC);
+                %compACC = PC(:,1);
+                %compACC = mean(filtACC,2); % or average
+                %compACC = sum(filtACC,2);
+                compACC = sqrt(sum(filtACC.^2,2)); % euclidian norm <=== best
+                
                 
                 handles.tplot.YData = flipud(compACC);
                 
                 windowACC = getWindow(compACC,handles.fs,handles.fftWindow);
-                [~,power] = FFT(windowACC,handles.fs);
+                [frequency,power] = FFT(windowACC,handles.fs);
                 handles.fplot.YData = power;
+                
+                [~,idx_04hz] = min(abs(frequency-04));
+                [~,idx_06hz] = min(abs(frequency-06));
+                [~,idx_30hz] = min(abs(frequency-30));
+                
+                newratio = sum(power(idx_04hz:idx_06hz)) / (sum(power(1:idx_04hz-1)) + sum(power(idx_06hz+1:idx_30hz)));
+                ratio_power = circshift(ratio_power,-nr_new_points,1);
+                ratio_power(end-nr_new_points+1 : end, : ) = repmat(newratio,[nr_new_points 1]);
+                handles.pplot.YData = flipud(ratio_power);
                 
             case 3       % Stop message
                 disp('Stop');
