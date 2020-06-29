@@ -113,9 +113,11 @@ else % Create the figure
     %     |                    |
     
     P_setup = Object_pos_width_dispatcher(...
-        [2 1 1  2 1 1  2 1 1  1],...
+        [1 3 1 1  3 1 1  3 1 1  2],...
         P_setup );
     
+    % Empty space
+    P_setup.count = P_setup.count+1;
     
     P_setup.count = P_setup.count+1;
     Txt_fnameD.x = obj_x_offcet;
@@ -141,7 +143,7 @@ else % Create the figure
         'Style','text',...
         'Units', 'Normalized',...
         'Position',[Txt_fnameU.x Txt_fnameU.y Txt_fnameU.w Txt_fnameU.h],...
-        'String','Last file name:',...
+        'String','File name:',...
         'BackgroundColor',handles.figureBGcolor,...
         'Visible','On',...
         'HorizontalAlignment','Left');
@@ -255,69 +257,64 @@ else % Create the figure
     
     %% Panel : Graph
     
-    % timeDomain
-    a_timeDomain.x = 0.04;
-    a_timeDomain.w = 0.45;
-    a_timeDomain.y = 0.05 ;
-    a_timeDomain.h = 0.85;
-    a_timeDomain.tag = 'axes_timeDomain';
-    handles.(a_timeDomain.tag) = axes('Parent',handles.uipanel_Graph,...
-        'Tag',a_timeDomain.tag,...
-        'Units','Normalized',...
-        'Position',[ a_timeDomain.x a_timeDomain.y a_timeDomain.w a_timeDomain.h ]);
+    P_graph = Object_pos_width_dispatcher(...
+        [1 3  1 5  1 5  1 1 ],...
+        P_graph );
     
+    % Empty space
+    P_graph.count = P_graph.count+1;
     
     % freqDomain
-    a_freqDomain.x = a_timeDomain.x + a_timeDomain.w + 0.05;
-    a_freqDomain.w = 0.45;
-    a_freqDomain.y = a_timeDomain.y ;
-    a_freqDomain.h = a_timeDomain.h;
+    P_graph.count = P_graph.count+1;
+    a_freqDomain.x = obj_x_offcet;
+    a_freqDomain.w = obj_x_width;
+    a_freqDomain.y = P_graph.pos  (P_graph.count);
+    a_freqDomain.h = P_graph.width(P_graph.count);
     a_freqDomain.tag = 'axes_freqDomain';
     handles.(a_freqDomain.tag) = axes('Parent',handles.uipanel_Graph,...
         'Tag',a_freqDomain.tag,...
         'Units','Normalized',...
         'Position',[ a_freqDomain.x a_freqDomain.y a_freqDomain.w a_freqDomain.h ]);
     
+    % Empty space
+    P_graph.count = P_graph.count+1;
     
-    % IP adress
-    e_adr.x = a_timeDomain.x;
-    e_adr.w = 0.20;
-    e_adr.y = a_timeDomain.y + a_timeDomain.h + a_timeDomain.y/2;
-    e_adr.h = (1 - e_adr.y)*0.80;
-    e_adr.tag = 'edit_Adress';
-    handles.(e_adr.tag) = uicontrol(handles.uipanel_Graph,...
-        'Style','edit',...
-        'Tag',e_adr.tag,...
-        'Units', 'Normalized',...
-        'Position',[e_adr.x e_adr.y e_adr.w e_adr.h],...
-        'BackgroundColor',handles.editBGcolor,...
-        'String','192.168.18.99',...
-        'Tooltip','IP adress',...
-        'Callback',@edit_Adress_Callback);
+    % powerDowain
+    P_graph.count = P_graph.count+1;
+    a_powerDomain.x = obj_x_offcet;
+    a_powerDomain.w = obj_x_width;
+    a_powerDomain.y = P_graph.pos  (P_graph.count);
+    a_powerDomain.h = P_graph.width(P_graph.count);
+    a_powerDomain.tag = 'axes_powerDomain';
+    handles.(a_powerDomain.tag) = axes('Parent',handles.uipanel_Graph,...
+        'Tag',a_powerDomain.tag,...
+        'Units','Normalized',...
+        'Position',[ a_powerDomain.x a_powerDomain.y a_powerDomain.w a_powerDomain.h ]);
     
+    % Empty space
+    P_graph.count = P_graph.count+1;
     
-    % Connecion
-    t_con.x = e_adr.x + e_adr.w + 0.05;
-    t_con.w = e_adr.w;
-    t_con.y = e_adr.y;
-    t_con.h = e_adr.h;
-    t_con.tag = 'toggle_Connection';
-    handles.(t_con.tag) = uicontrol(handles.uipanel_Graph,...
-        'Style','toggle',...
-        'Tag',t_con.tag,...
-        'Units', 'Normalized',...
-        'Position',[t_con.x t_con.y t_con.w t_con.h],...
-        'BackgroundColor',handles.buttonBGcolor,...
-        'String','Connect',...
-        'Tooltip','Switch On/Off TCPIP connection',...
-        'Callback',@toggle_Connection_Callback);
+    % timeDomain
+    P_graph.count = P_graph.count+1;
+    a_timeDomain.x = obj_x_offcet;
+    a_timeDomain.w = obj_x_width;
+    a_timeDomain.y = P_graph.pos  (P_graph.count);
+    a_timeDomain.h = P_graph.width(P_graph.count);
+    a_timeDomain.tag = 'axes_timeDomain';
+    handles.(a_timeDomain.tag) = axes('Parent',handles.uipanel_Graph,...
+        'Tag',a_timeDomain.tag,...
+        'Units','Normalized',...
+        'Position',[ a_timeDomain.x a_timeDomain.y a_timeDomain.w a_timeDomain.h ]);
     
+    % Empty space
+    P_graph.count = P_graph.count+1;
     
     % Stream
-    t_stream.x = t_con.x + t_con.w + 0.05;
-    t_stream.w = e_adr.w;
-    t_stream.y = e_adr.y;
-    t_stream.h = e_adr.h;
+    P_graph.count = P_graph.count+1;
+    t_stream.x = obj_x_offcet;
+    t_stream.w = obj_x_width/2;
+    t_stream.y = P_graph.pos  (P_graph.count);
+    t_stream.h = P_graph.width(P_graph.count);
     t_stream.tag = 'toggle_Stream';
     handles.(t_stream.tag) = uicontrol(handles.uipanel_Graph,...
         'Style','toggle',...
@@ -328,13 +325,14 @@ else % Create the figure
         'String','Stream',...
         'Tooltip','Switch On/Off the data streaming',...
         'Callback',@toggle_Stream_Callback,....
-        'Visible','Off');
+        'Visible','On');
     
     % Apply filter
-    c_filter.x = t_stream.x + t_stream.w + 0.05;
-    c_filter.w = e_adr.w;
-    c_filter.y = e_adr.y;
-    c_filter.h = e_adr.h;
+    % same Y
+    c_filter.x = obj_x_offcet + obj_x_width/2 + obj_x_offcet;
+    c_filter.w =                obj_x_width/2 - obj_x_offcet;
+    c_filter.y = P_graph.pos  (P_graph.count);
+    c_filter.h = P_graph.width(P_graph.count);
     c_filter.tag = 'checkbox_Filter';
     handles.(c_filter.tag) = uicontrol(handles.uipanel_Graph,...
         'Style','checkbox',...
@@ -345,7 +343,7 @@ else % Create the figure
         'String','Filter',...
         'Tooltip','Switch On/Off the filter',...
         'Value',1,...
-        'Visible','Off');
+        'Visible','On');
     
     
     %% Default values
@@ -371,6 +369,13 @@ else % Create the figure
     handles.tplot = plot(handles.axes_timeDomain, timeDomain.X, timeDomain.Y);
     handles.axes_timeDomain.XLabel.String = 'time (s)';
     handles.axes_timeDomain.YLabel.String = 'amplitude (A.U.)';
+    
+    % powerDomain
+    powerDomain.X = timeDomain.X;
+    powerDomain.Y = timeDomain.Y;
+    handles.pplot = plot(handles.axes_powerDomain, powerDomain.X, powerDomain.Y);
+    handles.axes_powerDomain.XLabel.String = 'time (s)';
+    handles.axes_powerDomain.YLabel.String = 'power[4-6]Hz ratio';
     
     % freqDomain
     [freqDomain.X, freqDomain.Y] = FFT(getWindow(timeDomain.Y',fs,fftWindow),fs);
