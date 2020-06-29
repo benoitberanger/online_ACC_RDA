@@ -63,7 +63,7 @@ else % Create the figure
     %% Panels
     
     panel_x_ratio = 0.2;
-    panel_y_ratio = 0.3;
+    panel_y_ratio = 0.4;
     
     P_setup.x = 0;
     P_setup.w =   panel_x_ratio;
@@ -101,7 +101,7 @@ else % Create the figure
     
     %% Panel : Setup
     
-    %     [    ip    ] [connect]
+    %     [   ip   ] [[connect]]
     %
     %     subjectID
     %     [                    ]
@@ -224,7 +224,7 @@ else % Create the figure
     % IP adress
     P_setup.count = P_setup.count+1;
     E_adr.x = obj_x_offcet;
-    E_adr.w = obj_x_width/2;
+    E_adr.w = obj_x_width/2 - obj_x_offcet;
     E_adr.y = P_setup.pos  (P_setup.count);
     E_adr.h = P_setup.width(P_setup.count);
     E_adr.tag = 'edit_Adress';
@@ -255,10 +255,186 @@ else % Create the figure
         'Callback',@toggle_Connection_Callback);
     
     
+    %% Panel : Audio
+    
+    %
+    % Audio (x)Off  ( )On      ParPort (x)Off  ( )On
+    %
+    % [] TestAudio         [] [] TestParPort      []
+    %
+    % [] Posture                                  []
+    %
+    % [] Rest                                     []
+    %
+    
+    
+    P_audio = Object_pos_width_dispatcher(...
+        [1 3  1 3  1 2  2],...
+        P_audio );
+    
+    % Empty space
+    P_audio.count = P_audio.count+1;
+    
+    % Rest
+    P_audio.count = P_audio.count+1;
+    B_rest.x = obj_x_offcet;
+    B_rest.w = obj_x_width;
+    B_rest.y = P_audio.pos  (P_audio.count);
+    B_rest.h = P_audio.width(P_audio.count);
+    B_rest.tag = 'pushbutton_Rest';
+    handles.(B_rest.tag) = uicontrol(handles.uipanel_Audio,...
+        'Style','pushbutton',...
+        'Units', 'Normalized',...
+        'Position',[B_rest.x B_rest.y B_rest.w B_rest.h],...
+        'String','Repos',...
+        'BackgroundColor',handles.buttonBGcolor*0.9,...
+        'Tag',B_rest.tag,...
+        'Callback',@pushbutton_Rest,...
+        'Visible','Off');
+    
+    % Empty space
+    P_audio.count = P_audio.count+1;
+    
+    % Posture
+    P_audio.count = P_audio.count+1;
+    B_posture.x = obj_x_offcet;
+    B_posture.w = obj_x_width;
+    B_posture.y = P_audio.pos  (P_audio.count);
+    B_posture.h = P_audio.width(P_audio.count);
+    B_posture.tag = 'pushbutton_Posture';
+    handles.(B_posture.tag) = uicontrol(handles.uipanel_Audio,...
+        'Style','pushbutton',...
+        'Units', 'Normalized',...
+        'Position',[B_posture.x B_posture.y B_posture.w B_posture.h],...
+        'String','Posture',...
+        'BackgroundColor',handles.buttonBGcolor*0.9,...
+        'Tag',B_posture.tag,...
+        'Callback',@pushbutton_Posture,...
+        'Visible','Off');
+    
+    % Empty space
+    P_audio.count = P_audio.count+1;
+    
+    % TestAudio
+    P_audio.count = P_audio.count+1;
+    B_testaudio.x = obj_x_offcet;
+    B_testaudio.w = obj_x_width/2 - obj_x_offcet;
+    B_testaudio.y = P_audio.pos  (P_audio.count);
+    B_testaudio.h = P_audio.width(P_audio.count);
+    B_testaudio.tag = 'pushbutton_TestAudio';
+    handles.(B_testaudio.tag) = uicontrol(handles.uipanel_Audio,...
+        'Style','pushbutton',...
+        'Units', 'Normalized',...
+        'Position',[B_testaudio.x B_testaudio.y B_testaudio.w B_testaudio.h],...
+        'String','TestAudio',...
+        'BackgroundColor',handles.buttonBGcolor*0.9,...
+        'Tag',B_testaudio.tag,...
+        'Callback',@pushbutton_TestAudio,...
+        'Visible','Off');
+    
+    % TestParPort
+    % Same Y
+    B_testpp.x = obj_x_offcet + obj_x_width/2 + obj_x_offcet;
+    B_testpp.w =                obj_x_width/2 - obj_x_offcet;
+    B_testpp.y = P_audio.pos  (P_audio.count);
+    B_testpp.h = P_audio.width(P_audio.count);
+    B_testpp.tag = 'pushbutton_TestParPort';
+    handles.(B_testpp.tag) = uicontrol(handles.uipanel_Audio,...
+        'Style','pushbutton',...
+        'Units', 'Normalized',...
+        'Position',[B_testpp.x B_testpp.y B_testpp.w B_testpp.h],...
+        'String','TestParPort',...
+        'BackgroundColor',handles.buttonBGcolor*0.9,...
+        'Tag',B_testpp.tag,...
+        'Callback',@pushbutton_TestParPort,...
+        'Visible','Off');
+    
+    
+    % ButtunGroup : Audio On/Off
+    P_audio.count = P_audio.count+1;
+    p_aof.x = obj_x_offcet;
+    p_aof.w = obj_x_width/2 - obj_x_offcet;
+    p_aof.y = P_audio.pos  (P_audio.count);
+    p_aof.h = P_audio.width(P_audio.count);
+    handles.uipanel_AudioOnOff = uibuttongroup( handles.uipanel_Audio, ...
+        'Title','Audio : On / Off',...
+        'Units', 'Normalized',...
+        'Position',[p_aof.x p_aof.y p_aof.w p_aof.h],...
+        'BackgroundColor',handles.figureBGcolor,...
+        'SelectionChangeFcn',@uipanel_AudioOnOff_SelectionChangeFcn);
+    
+    % ButtunGroup : ParPort On/Off
+    % Same Y
+    p_ppof.x = obj_x_offcet + obj_x_width/2 + obj_x_offcet;
+    p_ppof.w =                obj_x_width/2 - obj_x_offcet;
+    p_ppof.y = P_audio.pos  (P_audio.count);
+    p_ppof.h = P_audio.width(P_audio.count);
+    handles.uipanel_ParPortOnOff = uibuttongroup( handles.uipanel_Audio, ...
+        'Title','ParPort : On / Off',...
+        'Units', 'Normalized',...
+        'Position',[p_ppof.x p_ppof.y p_ppof.w p_ppof.h],...
+        'BackgroundColor',handles.figureBGcolor,...
+        'SelectionChangeFcn',@uipanel_ParPortOnOff_SelectionChangeFcn);
+    
+    % Audio : On Off buttons
+    handles.radiobutton_Audio_Off = uicontrol( handles.uipanel_AudioOnOff,...
+        'Style','radiobutton',...
+        'Units', 'Normalized',...
+        'Position',[obj_x_offcet*2, 0.1, obj_x_width/2 - obj_x_offcet, 0.8],...
+        'String','Off',...
+        'HorizontalAlignment','Center',...
+        'Tag','radiobutton_Audio_Off',...
+        'BackgroundColor',handles.figureBGcolor);
+    handles.radiobutton_Audio_On = uicontrol( handles.uipanel_AudioOnOff,...
+        'Style','radiobutton',...
+        'Units', 'Normalized',...
+        'Position',[obj_x_offcet + obj_x_width/2 + obj_x_offcet, 0.1, obj_x_width/2 - obj_x_offcet, 0.8],...
+        'String','On',...
+        'HorizontalAlignment','Center',...
+        'Tag','radiobutton_Audio_On',...
+        'BackgroundColor',handles.figureBGcolor);
+    
+    % ParPort : On Off buttons
+    handles.radiobutton_ParPort_Off = uicontrol( handles.uipanel_ParPortOnOff,...
+        'Style','radiobutton',...
+        'Units', 'Normalized',...
+        'Position',[obj_x_offcet*2, 0.1, obj_x_width/2 - obj_x_offcet, 0.8],...
+        'String','Off',...
+        'HorizontalAlignment','Center',...
+        'Tag','radiobutton_ParPort_Off',...
+        'BackgroundColor',handles.figureBGcolor);
+    handles.radiobutton_ParPort_On = uicontrol( handles.uipanel_ParPortOnOff,...
+        'Style','radiobutton',...
+        'Units', 'Normalized',...
+        'Position',[obj_x_offcet + obj_x_width/2 + obj_x_offcet, 0.1, obj_x_width/2 - obj_x_offcet, 0.8],...
+        'String','On',...
+        'HorizontalAlignment','Center',...
+        'Tag','radiobutton_ParPort_On',...
+        'BackgroundColor',handles.figureBGcolor);
+    
+    
     %% Panel : Graph
     
+    % [[ STREAM ]]    [x] filter
+    %  ________________________
+    % |aplitude                |
+    % |                        |
+    % |________________________|
+    %
+    %  ________________________
+    % |power                   |
+    % |                        |
+    % |________________________|
+    %
+    %  ________________________
+    % |classic FFT             |
+    % |                        |
+    % |________________________|
+    %
+    
+    
     P_graph = Object_pos_width_dispatcher(...
-        [1 3  1 5  1 5  1 1 ],...
+        [1 4  1 6  1 6  1 1 ],...
         P_graph );
     
     % Empty space
@@ -312,7 +488,7 @@ else % Create the figure
     % Stream
     P_graph.count = P_graph.count+1;
     t_stream.x = obj_x_offcet;
-    t_stream.w = obj_x_width/2;
+    t_stream.w = obj_x_width/2 - obj_x_offcet;
     t_stream.y = P_graph.pos  (P_graph.count);
     t_stream.h = P_graph.width(P_graph.count);
     t_stream.tag = 'toggle_Stream';
@@ -325,7 +501,7 @@ else % Create the figure
         'String','Stream',...
         'Tooltip','Switch On/Off the data streaming',...
         'Callback',@toggle_Stream_Callback,....
-        'Visible','On');
+        'Visible','Off');
     
     % Apply filter
     % same Y
@@ -343,7 +519,7 @@ else % Create the figure
         'String','Filter',...
         'Tooltip','Switch On/Off the filter',...
         'Value',1,...
-        'Visible','On');
+        'Visible','Off');
     
     
     %% Default values
@@ -421,6 +597,38 @@ end % function
 
 
 %% GUI Functions
+
+% -------------------------------------------------------------------------
+function uipanel_AudioOnOff_SelectionChangeFcn(hObject, eventdata)
+handles = guidata(hObject);
+
+switch eventdata.NewValue.Tag
+    case 'radiobutton_Audio_On'
+        handles.pushbutton_TestAudio.Visible = 'On';
+        handles.pushbutton_Posture.  Visible = 'On';
+        handles.pushbutton_Rest.     Visible = 'On';
+    case 'radiobutton_Audio_Off'
+        handles.pushbutton_TestAudio.Visible = 'Off';
+        handles.pushbutton_Posture.  Visible = 'Off';
+        handles.pushbutton_Rest.     Visible = 'Off';
+end
+
+guidata(hObject, handles);
+end % function
+
+% -------------------------------------------------------------------------
+function uipanel_ParPortOnOff_SelectionChangeFcn(hObject, eventdata)
+handles = guidata(hObject);
+
+switch eventdata.NewValue.Tag
+    case 'radiobutton_ParPort_On'
+        handles.pushbutton_TestParPort.Visible = 'On';
+    case 'radiobutton_ParPort_Off'
+        handles.pushbutton_TestParPort.Visible = 'Off';
+end
+
+guidata(hObject, handles);
+end % function
 
 % -------------------------------------------------------------------------
 function edit_GenerateFname_Callback(hObject, eventdata)
