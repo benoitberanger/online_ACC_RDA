@@ -528,7 +528,7 @@ else % Create the figure
     fs          = 5000; % Hz
     
     bufferSize  = 60; % seconds
-    displaySize = 10; % seconds
+    displaySize = 30; % seconds
     fftWindow   =  1; % seconds
     
     
@@ -547,8 +547,8 @@ else % Create the figure
     timeDomain.Y = zeros(size(timeDomain.X));
     handles.tplot = plot(handles.axes_timeDomain, timeDomain.X, timeDomain.Y);
     handles.axes_timeDomain.XLabel.String = 'time (s)';
-    handles.axes_timeDomain.YLabel.String = 'amplitude (A.U.)';
-    handles.axes_timeDomain.YLim = [0 4000];
+    handles.axes_timeDomain.YLabel.String = 'Acceleration (g)';
+    handles.axes_timeDomain.YLim = [0 5];
     
     % powerDomain
     powerDomain.X = timeDomain.X;
@@ -562,10 +562,10 @@ else % Create the figure
     [freqDomain.X, freqDomain.Y] = FFT(getWindow(timeDomain.Y',fs,fftWindow),fs);
     handles.fplot = plot(handles.axes_freqDomain, freqDomain.X, freqDomain.Y);
     handles.axes_freqDomain.XLabel.String = 'frequency (Hz)';
-    handles.axes_freqDomain.YLabel.String = 'Power (A.U.)';
+    handles.axes_freqDomain.YLabel.String = 'Power (g^2)';
     handles.axes_freqDomain.XLim  = [1 30];
     handles.axes_freqDomain.XTick =  1:30;
-    handles.axes_freqDomain.YLim  = [0 1000];
+    handles.axes_freqDomain.YLim  = [0 1.5];
     
     
     %% End of opening
@@ -1061,35 +1061,48 @@ try
                 newACC(:,2) = newACC(:,2) * props.resolutions(ACC_Y_idx);
                 newACC(:,3) = newACC(:,3) * props.resolutions(ACC_Z_idx);
                 
+                newACC = newACC/1450; % 1450mV = 1g;
+                
                 % update
                 nr_new_points = size(newACC,1);
                 rawACC = circshift(rawACC,-nr_new_points,1);
                 rawACC(end-nr_new_points+1 : end, : ) = newACC;
                 
-                filtACC = rawACC;
-                if get(handles.checkbox_Filter,'Value')
-                    % filtACC = ft_preproc_bandpassfilter( newACC', handles.fs, [1 15],2)';
-                    filtACC = ft_preproc_highpassfilter( filtACC', handles.fs, 1, 4 )';
-                end
+                % filtACC = ;
+                % if get(handles.checkbox_Filter,'Value')
+                %     % filtACC = ft_preproc_bandpassfilter( newACC', handles.fs, [1 15],2)';
+                %    filtACC = ft_preproc_highpassfilter( filtACC', handles.fs, 1, 4 )';
+                % end
                 
                 %PC = PCA(filtACC);
                 %compACC = PC(:,1);
                 %compACC = mean(filtACC,2); % or average
                 %compACC = sum(filtACC,2);
-                compACC = sqrt(sum(filtACC.^2,2)); % euclidian norm <=== best
                 
+                compACC = sqrt(sum(rawACC.^2,2)); % euclidian norm <=== best
                 
                 handles.tplot.YData = flipud(compACC);
+                % handles.tplot.YData = flipud(filtACC(:,1));
                 
-                windowACC = getWindow(compACC,handles.fs,handles.fftWindow);
-                [frequency,power] = FFT(windowACC,handles.fs);
+                windowACC_X = getWindow(rawACC(:,1),handles.fs,handles.fftWindow);
+                windowACC_Y = getWindow(rawACC(:,2),handles.fs,handles.fftWindow);
+                windowACC_Z = getWindow(rawACC(:,3),handles.fs,handles.fftWindow);
+                [~        ,power_X] = FFT(windowACC_X,handles.fs);
+                [~        ,power_Y] = FFT(windowACC_Y,handles.fs);
+                [frequency,power_Z] = FFT(windowACC_Z,handles.fs);
+                
+                %                 windowACC = getWindow(compACC,handles.fs,handles.fftWindow);
+                %                 [frequency,power] = FFT(windowACC,handles.fs);
+                
+                power =  mean([power_X(:) power_Y(:) power_Z(:)],2);
                 handles.fplot.YData = power;
                 
                 [~,idx_04hz] = min(abs(frequency-04));
                 [~,idx_06hz] = min(abs(frequency-06));
                 [~,idx_30hz] = min(abs(frequency-30));
                 
-                newratio = sum(power(idx_04hz:idx_06hz)) / (sum(power(1:idx_04hz-1)) + sum(power(idx_06hz+1:idx_30hz)));
+                % newratio = sum(power(idx_04hz:idx_06hz)) / (sum(power(1:idx_04hz-1)) + sum(power(idx_06hz+1:idx_30hz)));
+                newratio = sum(power(idx_04hz:idx_06hz)) / sum(power(1:idx_30hz));
                 ratio_power = circshift(ratio_power,-nr_new_points,1);
                 ratio_power(end-nr_new_points+1 : end, : ) = repmat(newratio,[nr_new_points 1]);
                 handles.pplot.YData = flipud(ratio_power);
