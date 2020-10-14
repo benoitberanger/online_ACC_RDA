@@ -609,12 +609,16 @@ end % function
 function pushbutton_TestParPort_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
+fprintf('[%s]: starting... \n', 'TestParPort');
+
 for i = 0 : 7
     msg = 2^i;
     WriteParPort(msg);
     fprintf('[%s]: writing %d \n', 'TestParPort', msg);
-    WaitSecs(0.050); % 50 ms
+    WaitSecs(0.250); % 250 ms
 end
+
+fprintf('[%s]: ...done \n', 'TestParPort');
 
 guidata(hObject, handles);
 end % function
