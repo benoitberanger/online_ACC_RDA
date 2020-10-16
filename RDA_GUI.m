@@ -201,8 +201,8 @@ else % Create the figure
         'String','',...
         'BackgroundColor',handles.editBGcolor,...
         'Visible','On',...
-        'HorizontalAlignment','Left',...
-        'Callback',@edit_GenerateFname_Callback);
+        'HorizontalAlignment','Left');
+    %         'Callback',@edit_GenerateFname_Callback);
     
     P_setup.count = P_setup.count+1;
     Txt_subjectID.x = obj_x_offcet;
@@ -538,9 +538,10 @@ else % Create the figure
     handles.displaySize = displaySize;
     handles.fftWindow   = fftWindow;
     
-    global rawACC ratio_power%#ok<TLEV>
+    global rawACC ratio_power onset%#ok<TLEV>
     rawACC      = zeros(displaySize*fs,3);
     ratio_power = zeros(displaySize*fs,1);
+    onset       = GetSecs;
     
     % timeDomain
     timeDomain.X = 1/fs:1/fs:displaySize;
@@ -566,6 +567,20 @@ else % Create the figure
     handles.axes_freqDomain.XLim  = [1 30];
     handles.axes_freqDomain.XTick =  1:30;
     handles.axes_freqDomain.YLim  = [0 1.5];
+    
+    
+    %% Set keys
+    
+    KbName('UnifyKeyNames');
+    handles.Keybinds.Posture = KbName('b');
+    handles.Keybinds.Rest    = KbName('y');
+    
+    fprintf('\n')
+    fprintf('Response buttons (fORRP 932) : \n')
+    fprintf('USB \n')
+    fprintf('2 x 1 CYL \n')
+    fprintf('HID NAR BYGRT \n')
+    fprintf('\n')
     
     
     %% End of opening
@@ -643,6 +658,7 @@ end
 
 PsychPortAudio('FillBuffer', handles.Playback_pahandle, content);
 PsychPortAudio('Start'     , handles.Playback_pahandle, [], [], 1);
+% PsychPortAudio('Start'     , handles.Playback_pahandle);
 WriteParPort(msg);
 WaitSecs(0.005);
 WriteParPort(0);
@@ -690,7 +706,7 @@ switch eventdata.NewValue.Tag
                 content = interp1( (1:N)/fs, content, (1:N/fs*freq)/freq, 'pchip' );
                 
                 % Save
-                handles.(char(sound)) = [content(:) content(:)]' ; % Need 1 lign per channel
+                handles.(char(sound)) = [content(:) content(:)]' ; % Need 1 line per channel
                 
             end
             
@@ -757,10 +773,12 @@ timestamp = datestr(now, 30); % it looks like "20200625T184209"
 data_dir = fullfile( fileparts(fileparts(mfilename('fullpath'))), 'data' );
 
 % Generate & save fname
-fname = fullfile(data_dir,...
-    [timestamp '__' subjectID '__' sessionID '.mat']); % generate
+fname = [ timestamp '__' subjectID '__' sessionID ]; % generate
+fpath = fullfile(data_dir,fname);
 handles.fname = fname;                                 % save it in the GUI main variable
 handles.text_fnameD.String = fname;                    % show it in the GUI
+
+fprintf('files will be written with this name : %s \n', fname)
 
 guidata(hObject, handles);
 end % function
@@ -975,6 +993,7 @@ global ACC_Y_idx
 global ACC_Z_idx
 global rawACC
 global ratio_power
+global onset
 
 try
     header_size = 24;
@@ -1123,7 +1142,25 @@ try
         tryheader = pnet(handles.con, 'read', header_size, 'byte', 'network', 'view', 'noblock');
         stop = ~get(handles.toggle_Stream,'Value') || ~get(handles.toggle_Connection,'Value') ;
         
+    end % while
+    
+    %----------------------------------------------------------------------
+    % Button press
+    [keyIsDown, secs, keyCode] = KbCheck();
+    if keyIsDown && (secs-onset)>1
+        if     keyCode(handles.Keybinds.Posture)
+            eventdata.Source.Tag = 'pushbutton_Posture';
+            pushbutton_SendAudio_Callback(handles.pushbutton_Posture, eventdata);
+            onset = secs;
+        elseif keyCode(handles.Keybinds.Rest)
+            eventdata.Source.Tag = 'pushbutton_Rest';
+            pushbutton_SendAudio_Callback(handles.pushbutton_Rest, eventdata);
+            onset = secs;
+        else
+            % pass
+        end
     end
+    %----------------------------------------------------------------------
     
 catch err
     
