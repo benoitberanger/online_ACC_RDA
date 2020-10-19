@@ -4,7 +4,7 @@ function varargout = RDA_GUI
 
 % debug=1 closes previous figure and reopens it, and send the gui handles
 % to base workspace.
-debug = 0;
+debug = 1;
 
 %% ====================================================================
 %% Open a singleton figure
@@ -416,7 +416,7 @@ else % Create the figure
     
     %% Panel : Graph
     
-    % [[ STREAM ]]    [x] filter
+    % [[ STREAM ]] [Start] [Stop]
     %  ________________________
     % |aplitude                |
     % |                        |
@@ -487,9 +487,11 @@ else % Create the figure
     P_graph.count = P_graph.count+1;
     
     % Stream
+    t = obj_x_width - 2*obj_x_offcet;
+    w = t/3;
     P_graph.count = P_graph.count+1;
     t_stream.x = obj_x_offcet;
-    t_stream.w = obj_x_width/2 - obj_x_offcet;
+    t_stream.w = w;
     t_stream.y = P_graph.pos  (P_graph.count);
     t_stream.h = P_graph.width(P_graph.count);
     t_stream.tag = 'toggle_Stream';
@@ -504,22 +506,34 @@ else % Create the figure
         'Callback',@toggle_Stream_Callback,....
         'Visible','Off');
     
-    % Apply filter
-    % same Y
-    c_filter.x = obj_x_offcet + obj_x_width/2 + obj_x_offcet;
-    c_filter.w =                obj_x_width/2 - obj_x_offcet;
-    c_filter.y = P_graph.pos  (P_graph.count);
-    c_filter.h = P_graph.width(P_graph.count);
-    c_filter.tag = 'checkbox_Filter';
-    handles.(c_filter.tag) = uicontrol(handles.uipanel_Graph,...
-        'Style','checkbox',...
-        'Tag',c_filter.tag,...
+    % Start recording
+    p_start.x = obj_x_offcet*2 + w;
+    p_start.w = w;
+    p_start.y = P_graph.pos  (P_graph.count);
+    p_start.h = P_graph.width(P_graph.count);
+    p_start.tag = 'pushbutton_Start';
+    handles.(p_start.tag) = uicontrol(handles.uipanel_Graph,...
+        'Style','pushbutton',...
+        'Tag',p_start.tag,...
         'Units', 'Normalized',...
-        'Position',[c_filter.x c_filter.y c_filter.w c_filter.h],...
+        'Position',[p_start.x p_start.y p_start.w p_start.h],...
         'BackgroundColor',handles.figureBGcolor,...
-        'String','Filter',...
-        'Tooltip','Switch On/Off the filter',...
-        'Value',0,...
+        'String','Start',...
+        'Visible','Off');
+    
+    % Stop recording
+    p_stop.x = obj_x_offcet*3 + w*2;
+    p_stop.w = w;
+    p_stop.y = P_graph.pos  (P_graph.count);
+    p_stop.h = P_graph.width(P_graph.count);
+    p_stop.tag = 'pushbutton_Stop';
+    handles.(p_stop.tag) = uicontrol(handles.uipanel_Graph,...
+        'Style','pushbutton',...
+        'Tag',p_stop.tag,...
+        'Units', 'Normalized',...
+        'Position',[p_stop.x p_stop.y p_stop.w p_stop.h],...
+        'BackgroundColor',handles.figureBGcolor,...
+        'String','Stop',...
         'Visible','Off');
     
     
@@ -905,8 +919,9 @@ switch get(hObject,'Value')
         end
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
-        set(handles.toggle_Stream,'Visible','On')
-        set(handles.checkbox_Filter,'Visible','Off')
+        set(handles.toggle_Stream   ,'Visible','On')
+        set(handles.pushbutton_Start,'Visible','On')
+        set(handles.pushbutton_Stop ,'Visible','On')
         
     case 0
         
@@ -921,8 +936,9 @@ switch get(hObject,'Value')
         fprintf('connection closed \n\n\n');
         
         set(hObject,'BackgroundColor',handles.buttonBGcolor)
-        set(handles.toggle_Stream,'Visible','Off')
-        set(handles.checkbox_Filter,'Visible','Off')
+        set(handles.toggle_Stream   ,'Visible','Off')
+        set(handles.pushbutton_Start,'Visible','Off')
+        set(handles.pushbutton_Stop ,'Visible','Off')
         
 end
 
@@ -1067,12 +1083,12 @@ try
                 end
                 lastBlock = datahdr.block;
                 
-                %                 % print marker info to MATLAB console
-                %                 if datahdr.markerCount > 0
-                %                     for m = 1:datahdr.markerCount
-                %                         disp(markers(m));
-                %                     end
-                %                 end
+                % print marker info to MATLAB console
+                if datahdr.markerCount > 0
+                    for m = 1:datahdr.markerCount
+                        disp(markers(m));
+                    end
+                end
                 
                 % Process EEG data,
                 % in this case extract last recorded second,
