@@ -15,3 +15,6 @@ desktop.ini
 ._*
 .Spotlight-V100
 .Trashes
+
+lib/*
+fichiers_thomas/*
