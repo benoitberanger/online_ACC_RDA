@@ -6,4 +6,8 @@ self.GenerateFname(subjectID,sessionID);
 
 self.resetData();
 
+if self.use_tiepie
+    self.scp.start();
+end
+
 end % function

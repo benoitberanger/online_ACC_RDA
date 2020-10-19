@@ -17,6 +17,13 @@ self.KeyLogger.ScaleTime(self.StartTimePTB);
 self.KeyLogger.ComputeDurations;
 self.KeyLogger.BuildGraph;
 
+if self.use_tiepie
+    while ~self.scp.IsDataReady
+        pause(1e-3)
+    end
+    self.data_tiepie = self.scp.getData();
+end
+
 % save
 save( self.fpath, 'self', 'dataBVA' )
 fprintf('done ! \n')

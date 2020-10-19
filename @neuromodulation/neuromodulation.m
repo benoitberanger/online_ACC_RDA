@@ -44,6 +44,10 @@ classdef neuromodulation < handle
         StartTimePTB
         KeyLogger
         
+        use_tiepie   = 0
+        scp
+        data_tiepie
+        
         %------------------------------------------------------------------
     end
     
