@@ -8,4 +8,14 @@ self.RDA.slidingACC = zeros(self.displaySize*self.fsBVA, 3); % euclidian norm
 self.RDA.ratioPower = zeros(self.displaySize*self.fsBVA, 1); % power ratio
 self.RDA.onset      = 0;
 
+% Keyboard logger, used for response button & mri trigger
+KbName('UnifyKeyNames');
+self.KeyLogger = KbLogger( ...
+    struct2array(self.GUIdata.Keybinds) ,...
+    KbName(struct2array(self.GUIdata.Keybinds)) );
+self.KeyLogger.Start; % Start recording events
+
+% timing
+self.StartTimePTB = GetSecs();
+
 end % function

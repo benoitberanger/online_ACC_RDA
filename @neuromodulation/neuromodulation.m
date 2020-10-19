@@ -40,6 +40,10 @@ classdef neuromodulation < handle
         RDA          = struct
         isstreaming  = 0
         timer
+        
+        StartTimePTB
+        KeyLogger
+        
         %------------------------------------------------------------------
     end
     

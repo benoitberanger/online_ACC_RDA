@@ -538,6 +538,7 @@ handles.axes_freqDomain.YLim  = [0 1.5];
 %% Set keys
 
 KbName('UnifyKeyNames');
+handles.Keybinds.MRI     = KbName('t');
 handles.Keybinds.Posture = KbName('b');
 handles.Keybinds.Rest    = KbName('y');
 
@@ -699,9 +700,7 @@ switch get(hObject,'Value')
         end
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
-        set(handles.toggle_Stream   ,'Visible','On')
-        set(handles.pushbutton_Start,'Visible','On')
-        set(handles.pushbutton_Stop ,'Visible','On')
+        set(handles.toggle_Stream ,'Visible','On')
         
     case 0
         
@@ -713,9 +712,7 @@ switch get(hObject,'Value')
         toggle_Stream_Callback(handles.toggle_Stream, eventdata)
         
         set(hObject,'BackgroundColor',handles.buttonBGcolor)
-        set(handles.toggle_Stream   ,'Visible','Off')
-        set(handles.pushbutton_Start,'Visible','Off')
-        set(handles.pushbutton_Stop ,'Visible','Off')
+        set(handles.toggle_Stream ,'Visible','Off')
         
 end
 
@@ -733,6 +730,8 @@ switch get(hObject,'Value')
         handles.self.startStream();
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
+        set(handles.pushbutton_Start,'Visible','On')
+        set(handles.pushbutton_Stop ,'Visible','On')
         
     case 0
         
@@ -749,7 +748,12 @@ end % function
 function pushbutton_Start_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
-handles.self.startNewFile();
+subjectID = handles.self.GUIdata.edit_subjectID.String; % fetch the field in the GUI
+sessionID = handles.self.GUIdata.edit_sessionID.String; % fetch the field in the GUI
+
+handles.self.startNewFile(subjectID, sessionID);
+
+handles.text_fnameD.String = handles.self.fname;   % show it in the GUI
 
 guidata(hObject, handles);
 end % function
