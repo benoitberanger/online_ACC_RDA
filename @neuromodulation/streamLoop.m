@@ -22,12 +22,7 @@ try
                 self.RDA.props = props;
                 disp(props);
                 
-                % Pre-allocate memory
-                dataBVA             = zeros(self.maxTime*self.fsBVA, self.RDA.props.channelCount);
-                self.RDA.idx        = 0;
-                self.RDA.slidingACC = zeros(self.displaySize*self.fsBVA, 3); % euclidian norm
-                self.RDA.ratioPower = zeros(self.displaySize*self.fsBVA, 1); % power ratio
-                self.RDA.onset      = 0;
+                self.resetData();
                 
                 ACC_X_idx = strcmp(props.channelNames,'ACC_X');
                 ACC_Y_idx = strcmp(props.channelNames,'ACC_Y');
@@ -78,12 +73,12 @@ try
                 end
                 self.RDA.lastBlock = datahdr.block;
                 
-%                 % print marker info to MATLAB console
-%                 if datahdr.markerCount > 0
-%                     for m = 1:datahdr.markerCount
-%                         disp(markers(m));
-%                     end
-%                 end
+                %                 % print marker info to MATLAB console
+                %                 if datahdr.markerCount > 0
+                %                     for m = 1:datahdr.markerCount
+                %                         disp(markers(m));
+                %                     end
+                %                 end
                 
                 newdata = reshape(data, self.RDA.props.channelCount, length(data) / self.RDA.props.channelCount)';
                 newdata = newdata .* self.RDA.props.resolutions;
@@ -124,6 +119,10 @@ try
                 
                 self.RDA.idx = self.RDA.idx + nNewPoints;
                 
+                if self.RDA.idx >= size(dataBVA,1)
+                    self.resetData();
+                end
+                
             case 3       % Stop message
                 disp('Stop');
                 data = pnet(self.RDA.con, 'read', hdr.size - header_size);
@@ -141,7 +140,7 @@ try
     %----------------------------------------------------------------------
     % Button press
     [keyIsDown, secs, keyCode] = KbCheck();
-    if keyIsDown && (secs-self.RDA.onset)>2
+    if self.isaudioready &&  keyIsDown && (secs-self.RDA.onset)>2
         if     keyCode(self.GUIdata.Keybinds.Posture)
             self.SendAudio('posture');
             self.RDA.onset = secs;

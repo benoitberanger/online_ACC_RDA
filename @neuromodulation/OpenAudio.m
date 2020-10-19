@@ -37,6 +37,8 @@ try
         
     end
     
+    self.isaudioready = 1;
+    
 catch err
     rethrow(err)
 end

@@ -135,8 +135,7 @@ handles.(E_sessionID.tag) = uicontrol( handles.uipanel_Setup,...
     'String','',...
     'BackgroundColor',handles.editBGcolor,...
     'Visible','On',...
-    'HorizontalAlignment','Left',...
-    'Callback',@edit_GenerateFname_Callback);
+    'HorizontalAlignment','Left');
 
 P_setup.count = P_setup.count+1;
 Txt_sessionID.x = obj_x_offcet;
@@ -487,8 +486,9 @@ handles.(p_start.tag) = uicontrol(handles.uipanel_Graph,...
     'Units', 'Normalized',...
     'Position',[p_start.x p_start.y p_start.w p_start.h],...
     'BackgroundColor',handles.figureBGcolor,...
-    'String','Start',...
-    'Visible','Off');
+    'String','Start new file',...
+    'Visible','Off',...
+    'Callback',@pushbutton_Start_Callback);
 
 % Stop recording
 p_stop.x = obj_x_offcet*3 + w*2;
@@ -502,8 +502,9 @@ handles.(p_stop.tag) = uicontrol(handles.uipanel_Graph,...
     'Units', 'Normalized',...
     'Position',[p_stop.x p_stop.y p_stop.w p_stop.h],...
     'BackgroundColor',handles.figureBGcolor,...
-    'String','Stop',...
-    'Visible','Off');
+    'String','Stop new file',...
+    'Visible','Off',...
+    'Callback',@pushbutton_Stop_Callback);
 
 
 %% Setup graph
@@ -666,20 +667,6 @@ guidata(hObject, handles);
 end % function
 
 %**************************************************************************
-function edit_GenerateFname_Callback(hObject, eventdata)
-handles = guidata(hObject);
-
-subjectID = handles.edit_subjectID.String; % fetch the field in the GUI
-sessionID = handles.edit_sessionID.String; % fetch the field in the GUI
-
-handles.self.GenerateFname(subjectID,sessionID);
-
-handles.text_fnameD.String = handles.self.fname;        % show it in the GUI
-
-guidata(hObject, handles);
-end % function
-
-%**************************************************************************
 function edit_Adress_Callback(hObject, eventdata) %#ok<*INUSD>
 handles = guidata(hObject);
 
@@ -735,7 +722,6 @@ end
 guidata(hObject, handles);
 end % function
 
-
 %**************************************************************************
 function toggle_Stream_Callback(hObject, eventdata)
 handles = guidata(hObject);
@@ -755,6 +741,24 @@ switch get(hObject,'Value')
         set(hObject,'BackgroundColor',handles.buttonBGcolor)
         
 end
+
+guidata(hObject, handles);
+end % function
+
+%**************************************************************************
+function pushbutton_Start_Callback(hObject, eventdata)
+handles = guidata(hObject);
+
+handles.self.startNewFile();
+
+guidata(hObject, handles);
+end % function
+
+%**************************************************************************
+function pushbutton_Stop_Callback(hObject, eventdata)
+handles = guidata(hObject);
+
+handles.self.stopNewFile();
 
 guidata(hObject, handles);
 end % function

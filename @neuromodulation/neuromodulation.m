@@ -26,18 +26,19 @@ classdef neuromodulation < handle
         % DO NOT MODIFY BELLOW
         figH
         GUIdata
-        GUIname     = 'neuromodulationGUI'
-        debug       = 0
-                
-        Audio       = struct
+        GUIname      = 'neuromodulationGUI'
+        debug        = 0
         
-        dpath       = ''
-        fpath       = ''
-        fname       = ''
+        isaudioready = 0;
+        Audio        = struct
         
-        isconnected = 0
-        RDA         = struct
-        isstreaming = 0
+        dpath        = ''
+        fpath        = ''
+        fname        = ''
+        
+        isconnected  = 0
+        RDA          = struct
+        isstreaming  = 0
         timer
         %------------------------------------------------------------------
     end
