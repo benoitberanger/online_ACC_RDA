@@ -6,7 +6,7 @@ classdef neuromodulation < handle
         %------------------------------------------------------------------
         % THIGS TO MODIFY HERE
         
-        maxTime       = 1*60; % s
+        maxTime       = 10*60; % s
         
         % BVA related
         fsBVA         = 5000;  % Hz

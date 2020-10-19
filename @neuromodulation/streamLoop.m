@@ -1,4 +1,5 @@
 function streamLoop( self, timer, event )
+global dataBVA
 
 try
     header_size = 24;
@@ -22,11 +23,10 @@ try
                 disp(props);
                 
                 % Pre-allocate memory
-                self.RDA.dataBVA    = zeros(self.maxTime*self.fsBVA, self.RDA.props.channelCount);
-                self.RDA.dataBVA(end)  = 0; % need to force pre-allocation
+                dataBVA             = zeros(self.maxTime*self.fsBVA, self.RDA.props.channelCount);
                 self.RDA.idx        = 0;
                 self.RDA.slidingACC = zeros(self.displaySize*self.fsBVA, 3); % euclidian norm
-                self.RDA.ratioPower = zeros(self.displaySize*self.fsBVA, 1); % euclidian norm
+                self.RDA.ratioPower = zeros(self.displaySize*self.fsBVA, 1); % power ratio
                 self.RDA.onset      = 0;
                 
                 ACC_X_idx = strcmp(props.channelNames,'ACC_X');
@@ -78,19 +78,20 @@ try
                 end
                 self.RDA.lastBlock = datahdr.block;
                 
-                % print marker info to MATLAB console
-                if datahdr.markerCount > 0
-                    for m = 1:datahdr.markerCount
-                        disp(markers(m));
-                    end
-                end
+%                 % print marker info to MATLAB console
+%                 if datahdr.markerCount > 0
+%                     for m = 1:datahdr.markerCount
+%                         disp(markers(m));
+%                     end
+%                 end
+                
                 newdata = reshape(data, self.RDA.props.channelCount, length(data) / self.RDA.props.channelCount)';
                 newdata = newdata .* self.RDA.props.resolutions;
                 
                 % update
                 nNewPoints = size(newdata,1);
                 idx = self.RDA.idx;
-                self.RDA.dataBVA(idx+1:idx+nNewPoints,:) = newdata;
+                dataBVA(idx+1:idx+nNewPoints,:) = newdata;
                 
                 newACC = newdata(:,[self.RDA.ACC_X_idx self.RDA.ACC_Y_idx self.RDA.ACC_Z_idx])/1450; % 1450mV = 1g;
                 
@@ -141,13 +142,11 @@ try
     % Button press
     [keyIsDown, secs, keyCode] = KbCheck();
     if keyIsDown && (secs-self.RDA.onset)>2
-        if     keyCode(handles.Keybinds.Posture)
-            eventdata.Source.Tag = 'pushbutton_Posture';
-            pushbutton_SendAudio_Callback(handles.pushbutton_Posture, eventdata);
+        if     keyCode(self.GUIdata.Keybinds.Posture)
+            self.SendAudio('posture');
             self.RDA.onset = secs;
-        elseif keyCode(handles.Keybinds.Rest)
-            eventdata.Source.Tag = 'pushbutton_Rest';
-            pushbutton_SendAudio_Callback(handles.pushbutton_Rest, eventdata);
+        elseif keyCode(self.GUIdata.Keybinds.Rest)
+            self.SendAudio('repos');
             self.RDA.onset = secs;
         else
             % pass

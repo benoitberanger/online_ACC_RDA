@@ -11,7 +11,7 @@ switch self.isstreaming
             warning('neuromodulation:Timer','[%s]: Cannot delete the timer object. delete(timerfind) can clean all timers in the memory', mfilename)
         end
     case 0
-        fprintf('[%s]: not streaming \n', mfilename, datestr(now,13))
+%         fprintf('[%s]: not streaming \n', mfilename, datestr(now,13))
         
 end
 

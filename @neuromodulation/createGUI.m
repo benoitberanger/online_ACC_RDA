@@ -718,6 +718,7 @@ switch get(hObject,'Value')
         
     case 0
         
+        handles.self.stopStream();
         handles.self.RDAdisconnect();
         
         % Switch off streaming if needed
