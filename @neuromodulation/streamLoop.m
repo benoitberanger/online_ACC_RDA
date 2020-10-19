@@ -73,12 +73,13 @@ try
                 end
                 self.RDA.lastBlock = datahdr.block;
                 
-                %                 % print marker info to MATLAB console
-                %                 if datahdr.markerCount > 0
-                %                     for m = 1:datahdr.markerCount
-                %                         disp(markers(m));
-                %                     end
-                %                 end
+                % print marker info to MATLAB console
+                if datahdr.markerCount > 0
+                    for m = 1:datahdr.markerCount
+                        % disp(markers(m));
+                        self.RDA.marker(end+1 : end+datahdr.markerCount) = markers;
+                    end
+                end
                 
                 newdata = reshape(data, self.RDA.props.channelCount, length(data) / self.RDA.props.channelCount)';
                 newdata = newdata .* self.RDA.props.resolutions;

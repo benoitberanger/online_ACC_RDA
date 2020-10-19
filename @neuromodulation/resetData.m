@@ -7,6 +7,7 @@ self.RDA.idx        = 0;
 self.RDA.slidingACC = zeros(self.displaySize*self.fsBVA, 3); % euclidian norm
 self.RDA.ratioPower = zeros(self.displaySize*self.fsBVA, 1); % power ratio
 self.RDA.onset      = 0;
+self.RDA.marker     = struct('size',[],'position',[],'points',[],'channel',[],'type',[],'description',[]);
 
 % Keyboard logger, used for response button & mri trigger
 KbName('UnifyKeyNames');
