@@ -577,7 +577,7 @@ end % function
 %% GUI Functions
 %% ====================================================================
 
-% -------------------------------------------------------------------------
+%**************************************************************************
 function obj = Object_pos_width_dispatcher( vect , obj )
 
 obj.vect  = vect; % relative proportions of each panel, from left to right
@@ -594,7 +594,7 @@ obj.width = @(count) obj.vect(count)*obj.unitWidth;
 
 end % function
 
-% -------------------------------------------------------------------------
+%**************************************************************************
 function pushbutton_SendAudio_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
@@ -613,7 +613,7 @@ handles.self.SendAudio(name);
 guidata(hObject, handles);
 end % function
 
-% -------------------------------------------------------------------------
+%**************************************************************************
 function uipanel_AudioOnOff_SelectionChangeFcn(hObject, eventdata)
 handles = guidata(hObject);
 
@@ -639,7 +639,7 @@ end
 guidata(hObject, handles);
 end % function
 
-% -------------------------------------------------------------------------
+%**************************************************************************
 function uipanel_ParPortOnOff_SelectionChangeFcn(hObject, eventdata)
 handles = guidata(hObject);
 
@@ -656,7 +656,7 @@ end
 guidata(hObject, handles);
 end % function
 
-% *************************************************************************
+%**************************************************************************
 function pushbutton_TestParPort_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
@@ -665,7 +665,7 @@ handles.self.TestParPort();
 guidata(hObject, handles);
 end % function
 
-% -------------------------------------------------------------------------
+%**************************************************************************
 function edit_GenerateFname_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
@@ -679,7 +679,7 @@ handles.text_fnameD.String = handles.self.fname;        % show it in the GUI
 guidata(hObject, handles);
 end % function
 
-% *************************************************************************
+%**************************************************************************
 function edit_Adress_Callback(hObject, eventdata) %#ok<*INUSD>
 handles = guidata(hObject);
 
@@ -691,37 +691,24 @@ catch err
     set(hObject,'String',handles.self.ip);
     rethrow(err)
 end
-    
+
 guidata(hObject, handles);
 end % function
 
 
-% *************************************************************************
+%**************************************************************************
 function toggle_Connection_Callback(hObject, eventdata)
-
 handles = guidata(hObject);
 
 switch get(hObject,'Value')
     
     case 1
         
-        recorderip = get(handles.edit_Adress,'String');
-        
-        fprintf('Trying to connect to : %s ... ',recorderip)
-        
-        % Establish connection to BrainVision Recorder Software 32Bit RDA-Port
-        % (use 51234 to connect with 16Bit Port)
-        handles.con = pnet('tcpconnect', recorderip, 51244);
-        %         handles.con = pnet('tcpconnect', recorderip, 51234);
-        % handles.con = tcpclient(''
-        
-        % Check established connection and display a message
-        status = pnet(handles.con,'status');
-        if status > 0
-            fprintf('connection established \n');
-        elseif status == -1
+        try
+            handles.self.RDAconnect();
+        catch err
             set(hObject,'Value',0)
-            error('connection FAILED')
+            rethrow(err)
         end
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
@@ -731,15 +718,11 @@ switch get(hObject,'Value')
         
     case 0
         
+        handles.self.RDAdisconnect();
+        
         % Switch off streaming if needed
         set(handles.toggle_Stream,'Value',0);
         toggle_Stream_Callback(handles.toggle_Stream, eventdata)
-        
-        % Close all open socket connections
-        pnet('closeall');
-        
-        % Display a message
-        fprintf('connection closed \n\n\n');
         
         set(hObject,'BackgroundColor',handles.buttonBGcolor)
         set(handles.toggle_Stream   ,'Visible','Off')
@@ -749,245 +732,28 @@ switch get(hObject,'Value')
 end
 
 guidata(hObject, handles);
-
 end % function
 
 
-% *************************************************************************
+%**************************************************************************
 function toggle_Stream_Callback(hObject, eventdata)
-
 handles = guidata(hObject);
 
 switch get(hObject,'Value')
     
     case 1
         
-        handles.RefreshPeriod = 0.010; % secondes
-        
-        handles.TimerHandle = timer(...
-            'StartDelay',0 ,...
-            'Period', handles.RefreshPeriod ,...
-            'TimerFcn', {@DoStream,handles.(mfilename)} ,...
-            'BusyMode', 'drop',...  %'queue'
-            'TasksToExecute', Inf,...
-            'ExecutionMode', 'fixedRate');
-        
-        guidata(hObject, handles);
+        handles.self.startStream();
         
         set(hObject,'BackgroundColor',[0.5 0.5 1])
-        fprintf('Streaming ON \n')
-        
-        start(handles.TimerHandle)
         
     case 0
         
-        if isfield(handles,'TimerHandle')
-            
-            try
-                stop( handles.TimerHandle );
-                delete( handles.TimerHandle );
-                handles = rmfield( handles , 'TimerHandle' );
-            catch err %#ok<*NASGU>
-                warning('GUI:Timer','Cannot delete the timer object. delete(timerfind) can clean all timers in the memory')
-            end
-            
-            fprintf('Streaming OFF \n')
-            
-        end
+        handles.self.stopStream();
         
         set(hObject,'BackgroundColor',handles.buttonBGcolor)
         
 end
 
 guidata(hObject, handles);
-
-end % function
-
-
-% *************************************************************************
-function DoStream(hObject,eventdata,hFigure) %#ok<*INUSL>
-handles = guidata(hFigure);
-
-global props
-global lastBlock
-global ACC_X_idx
-global ACC_Y_idx
-global ACC_Z_idx
-global rawACC
-global ratio_power
-global onset
-
-try
-    header_size = 24;
-    
-    % check for existing data in socket buffer
-    tryheader = pnet(handles.con, 'read', header_size, 'byte', 'network', 'view', 'noblock');
-    stop = false;
-    
-    while ~isempty(tryheader) && ~stop
-        
-        % Read header of RDA message
-        hdr = RDA.ReadHeader(handles.con);
-        
-        % Perform some action depending of the type of the data package
-        switch hdr.type
-            case 1 % Start, Setup information
-                
-                disp('Start');
-                
-                % Read and display properties
-                props = RDA.ReadStartMessage(handles.con, hdr);
-                handles.props = props;
-                disp(props);
-                
-                ACC_X_idx = strcmp(props.channelNames,'ACC_X');
-                ACC_Y_idx = strcmp(props.channelNames,'ACC_Y');
-                ACC_Z_idx = strcmp(props.channelNames,'ACC_Z');
-                
-                if sum(ACC_X_idx) == 0
-                    stop( handles.TimerHandle );
-                    delete( handles.TimerHandle );
-                    error('ACC_X channel not found')
-                elseif sum(ACC_X_idx) > 1
-                    stop( handles.TimerHandle );
-                    delete( handles.TimerHandle );
-                    error('several ACC_X channels found')
-                elseif sum(ACC_Y_idx) == 0
-                    stop( handles.TimerHandle );
-                    delete( handles.TimerHandle );
-                    error('ACC_Y channel not found')
-                elseif sum(ACC_Y_idx) > 1
-                    stop( handles.TimerHandle );
-                    delete( handles.TimerHandle );
-                    error('several ACC_Y channels found')
-                elseif sum(ACC_Z_idx) == 0
-                    stop( handles.TimerHandle );
-                    delete( handles.TimerHandle );
-                    error('ACC_Z channel not found')
-                elseif sum(ACC_Z_idx) > 1
-                    stop( handles.TimerHandle );
-                    delete( handles.TimerHandle );
-                    error('several ACC_Z channels found')
-                end
-                
-                ACC_X_idx = find(ACC_X_idx);
-                ACC_Y_idx = find(ACC_Y_idx);
-                ACC_Z_idx = find(ACC_Z_idx);
-                
-                % Reset block counter to check overflows
-                lastBlock = -1;
-                
-            case 4 % 32Bit Data block
-                
-                % Read data and markers from message
-                [datahdr, data, markers] = RDA.ReadDataMessage(handles.con, hdr, props); %#ok<ASGLU>
-                data = double(data);
-                
-                % check tcpip buffer overflow
-                if lastBlock ~= -1 && datahdr.block > lastBlock + 1
-                    disp(['******* Overflow with ' int2str(datahdr.block - lastBlock) ' blocks ******']);
-                end
-                lastBlock = datahdr.block;
-                
-                % print marker info to MATLAB console
-                if datahdr.markerCount > 0
-                    for m = 1:datahdr.markerCount
-                        disp(markers(m));
-                    end
-                end
-                
-                % Process EEG data,
-                % in this case extract last recorded second,
-                newACC = reshape(data, props.channelCount, length(data) / props.channelCount)';
-                newACC = newACC(:,[ACC_X_idx ACC_Y_idx ACC_Z_idx]); % save only the EOG channels
-                
-                % Apply scaling resolution
-                newACC(:,1) = newACC(:,1) * props.resolutions(ACC_X_idx);
-                newACC(:,2) = newACC(:,2) * props.resolutions(ACC_Y_idx);
-                newACC(:,3) = newACC(:,3) * props.resolutions(ACC_Z_idx);
-                
-                newACC = newACC/1450; % 1450mV = 1g;
-                
-                % update
-                nr_new_points = size(newACC,1);
-                rawACC = circshift(rawACC,-nr_new_points,1);
-                rawACC(end-nr_new_points+1 : end, : ) = newACC;
-                
-                % filtACC = ;
-                % if get(handles.checkbox_Filter,'Value')
-                %     % filtACC = ft_preproc_bandpassfilter( newACC', handles.fs, [1 15],2)';
-                %    filtACC = ft_preproc_highpassfilter( filtACC', handles.fs, 1, 4 )';
-                % end
-                
-                %PC = PCA(filtACC);
-                %compACC = PC(:,1);
-                %compACC = mean(filtACC,2); % or average
-                %compACC = sum(filtACC,2);
-                
-                compACC = sqrt(sum(rawACC.^2,2)); % euclidian norm <=== best
-                
-                handles.tplot.YData = flipud(compACC);
-                % handles.tplot.YData = flipud(filtACC(:,1));
-                
-                windowACC_X = getWindow(rawACC(:,1),handles.fs,handles.fftWindow);
-                windowACC_Y = getWindow(rawACC(:,2),handles.fs,handles.fftWindow);
-                windowACC_Z = getWindow(rawACC(:,3),handles.fs,handles.fftWindow);
-                [~        ,power_X] = FFT(windowACC_X,handles.fs);
-                [~        ,power_Y] = FFT(windowACC_Y,handles.fs);
-                [frequency,power_Z] = FFT(windowACC_Z,handles.fs);
-                
-                %                 windowACC = getWindow(compACC,handles.fs,handles.fftWindow);
-                %                 [frequency,power] = FFT(windowACC,handles.fs);
-                
-                power =  mean([power_X(:) power_Y(:) power_Z(:)],2);
-                handles.fplot.YData = power;
-                
-                [~,idx_04hz] = min(abs(frequency-04));
-                [~,idx_06hz] = min(abs(frequency-06));
-                [~,idx_30hz] = min(abs(frequency-30));
-                
-                % newratio = sum(power(idx_04hz:idx_06hz)) / (sum(power(1:idx_04hz-1)) + sum(power(idx_06hz+1:idx_30hz)));
-                newratio = sum(power(idx_04hz:idx_06hz)) / sum(power(1:idx_30hz));
-                ratio_power = circshift(ratio_power,-nr_new_points,1);
-                ratio_power(end-nr_new_points+1 : end, : ) = repmat(newratio,[nr_new_points 1]);
-                handles.pplot.YData = flipud(ratio_power);
-                
-            case 3       % Stop message
-                disp('Stop');
-                data = pnet(handles.con, 'read', hdr.size - header_size);
-                finish = true;
-                
-            otherwise    % ignore all unknown types, but read the package from buffer
-                data = pnet(handles.con, 'read', hdr.size - header_size);
-        end
-        
-        tryheader = pnet(handles.con, 'read', header_size, 'byte', 'network', 'view', 'noblock');
-        stop = ~get(handles.toggle_Stream,'Value') || ~get(handles.toggle_Connection,'Value') ;
-        
-    end % while
-    
-    %----------------------------------------------------------------------
-    % Button press
-    [keyIsDown, secs, keyCode] = KbCheck();
-    if keyIsDown && (secs-onset)>2
-        if     keyCode(handles.Keybinds.Posture)
-            eventdata.Source.Tag = 'pushbutton_Posture';
-            pushbutton_SendAudio_Callback(handles.pushbutton_Posture, eventdata);
-            onset = secs;
-        elseif keyCode(handles.Keybinds.Rest)
-            eventdata.Source.Tag = 'pushbutton_Rest';
-            pushbutton_SendAudio_Callback(handles.pushbutton_Rest, eventdata);
-            onset = secs;
-        else
-            % pass
-        end
-    end
-    %----------------------------------------------------------------------
-    
-catch err
-    
-    err.getReport
-    
-end
-
 end % function

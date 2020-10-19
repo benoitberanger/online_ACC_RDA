@@ -6,16 +6,18 @@ classdef neuromodulation < handle
         %------------------------------------------------------------------
         % THIGS TO MODIFY HERE
         
-        maxTime     = 10*60; % s
+        maxTime       = 1*60; % s
         
         % BVA related
-        fsBVA       = 5000;  % Hz
-        ip          = '192.168.18.99';
+        fsBVA         = 5000;  % Hz
+        ip            = '192.168.18.99';
         
         % Figure
-        displaySize = 30;    % s
-        fftWindow   = 1;     % s
+        displaySize   = 30;    % s
+        fftWindow     = 1;     % s
         
+        % Stream
+        refreshPeriod = 0.010; % s
         
         %------------------------------------------------------------------
         
@@ -26,9 +28,7 @@ classdef neuromodulation < handle
         GUIdata
         GUIname     = 'neuromodulationGUI'
         debug       = 0
-        
-        dataBVA                        % (maxTime * fsBVA) x nChan
-        
+                
         Audio       = struct
         
         dpath       = ''
@@ -36,7 +36,9 @@ classdef neuromodulation < handle
         fname       = ''
         
         isconnected = 0
-        rda         = struct
+        RDA         = struct
+        isstreaming = 0
+        timer
         %------------------------------------------------------------------
     end
     
