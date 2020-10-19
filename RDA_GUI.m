@@ -1147,7 +1147,7 @@ try
     %----------------------------------------------------------------------
     % Button press
     [keyIsDown, secs, keyCode] = KbCheck();
-    if keyIsDown && (secs-onset)>1
+    if keyIsDown && (secs-onset)>2
         if     keyCode(handles.Keybinds.Posture)
             eventdata.Source.Tag = 'pushbutton_Posture';
             pushbutton_SendAudio_Callback(handles.pushbutton_Posture, eventdata);
