@@ -736,6 +736,8 @@ function pushbutton_Stop_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
 handles.self.stopNewFile();
+set(handles.toggle_Stream,'BackgroundColor',handles.buttonBGcolor)
+set(handles.toggle_Stream,'Value',0)
 
 guidata(hObject, handles);
 end % function

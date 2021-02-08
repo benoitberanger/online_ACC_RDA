@@ -13,7 +13,7 @@ classdef neuromodulation < handle
         ip            = '192.168.18.99';
         
         % Figure
-        displaySize   = 10;    % s
+        displaySize   = 20;    % s
         fftWindow     = 1;     % s
         
         % Stream
