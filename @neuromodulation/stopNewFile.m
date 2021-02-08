@@ -1,6 +1,8 @@
 function stopNewFile( self )
 global dataBVA
 
+self.stopStream();
+
 % outidr
 fprintf('[%s]: saving in %s ... ', mfilename, self.fpath)
 if exist(self.dpath, 'dir')~=7
