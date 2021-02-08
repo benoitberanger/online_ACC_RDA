@@ -395,31 +395,11 @@ handles.radiobutton_ParPort_On = uicontrol( handles.uipanel_ParPortOnOff,...
 % |                        |
 % |________________________|
 %
-%  ________________________
-% |classic self.FFT             |
-% |                        |
-% |________________________|
-%
 
 
 P_graph = Object_pos_width_dispatcher(...
-    [1 4  1 6  1 6  1 1 ],...
+    [ 1 6  1 6  1 1 ],...
     P_graph );
-
-% Empty space
-P_graph.count = P_graph.count+1;
-
-% freqDomain
-P_graph.count = P_graph.count+1;
-a_freqDomain.x = obj_x_offcet;
-a_freqDomain.w = obj_x_width;
-a_freqDomain.y = P_graph.pos  (P_graph.count);
-a_freqDomain.h = P_graph.width(P_graph.count);
-a_freqDomain.tag = 'axes_freqDomain';
-handles.(a_freqDomain.tag) = axes('Parent',handles.uipanel_Graph,...
-    'Tag',a_freqDomain.tag,...
-    'Units','Normalized',...
-    'Position',[ a_freqDomain.x a_freqDomain.y a_freqDomain.w a_freqDomain.h ]);
 
 % Empty space
 P_graph.count = P_graph.count+1;
@@ -511,11 +491,12 @@ handles.(p_stop.tag) = uicontrol(handles.uipanel_Graph,...
 
 % timeDomain
 timeDomain.X = 1/self.fsBVA:1/self.fsBVA:self.displaySize;
-timeDomain.Y = zeros(size(timeDomain.X));
+timeDomain.Y = zeros(length(timeDomain.X),2);
 handles.tplot = plot(handles.axes_timeDomain, timeDomain.X, timeDomain.Y);
 handles.axes_timeDomain.XLabel.String = 'time (s)';
 handles.axes_timeDomain.YLabel.String = 'Acceleration (g)';
 handles.axes_timeDomain.YLim = [0 5];
+legend(handles.axes_timeDomain,{'L'; 'R'})
 
 % powerDomain
 powerDomain.X = timeDomain.X;
@@ -524,15 +505,7 @@ handles.pplot = plot(handles.axes_powerDomain, powerDomain.X, powerDomain.Y);
 handles.axes_powerDomain.XLabel.String = 'time (s)';
 handles.axes_powerDomain.YLabel.String = 'power[4-6]Hz ratio';
 handles.axes_powerDomain.YLim = [0 0.5];
-
-% freqDomain
-[freqDomain.X, freqDomain.Y] = self.FFT(self.getWindow(timeDomain.Y',self.fsBVA,self.fftWindow),self.fsBVA);
-handles.fplot = plot(handles.axes_freqDomain, freqDomain.X, freqDomain.Y);
-handles.axes_freqDomain.XLabel.String = 'frequency (Hz)';
-handles.axes_freqDomain.YLabel.String = 'Power (g^2)';
-handles.axes_freqDomain.XLim  = [1 30];
-handles.axes_freqDomain.XTick =  1:30;
-handles.axes_freqDomain.YLim  = [0 1.5];
+legend(handles.axes_powerDomain,{'L'; 'R'})
 
 
 %% Set keys

@@ -24,39 +24,19 @@ try
                 
                 self.resetData();
                 
-                ACC_X_idx = strcmp(props.channelNames,'ACC_X');
-                ACC_Y_idx = strcmp(props.channelNames,'ACC_Y');
-                ACC_Z_idx = strcmp(props.channelNames,'ACC_Z');
+                L_ACC_X_idx = strcmp(props.channelNames,'L_ACC_X');
+                L_ACC_Y_idx = strcmp(props.channelNames,'L_ACC_Y');
+                L_ACC_Z_idx = strcmp(props.channelNames,'L_ACC_Z');
+                R_ACC_X_idx = strcmp(props.channelNames,'R_ACC_X');
+                R_ACC_Y_idx = strcmp(props.channelNames,'R_ACC_Y');
+                R_ACC_Z_idx = strcmp(props.channelNames,'R_ACC_Z');
                 
-                if sum(ACC_X_idx) == 0
-                    stop( self.timer );
-                    delete( self.timer );
-                    error('ACC_X channel not found')
-                elseif sum(ACC_X_idx) > 1
-                    stop( self.timer );
-                    delete( self.timer );
-                    error('several ACC_X channels found')
-                elseif sum(ACC_Y_idx) == 0
-                    stop( self.timer );
-                    delete( self.timer );
-                    error('ACC_Y channel not found')
-                elseif sum(ACC_Y_idx) > 1
-                    stop( self.timer );
-                    delete( self.timer );
-                    error('several ACC_Y channels found')
-                elseif sum(ACC_Z_idx) == 0
-                    stop( self.timer );
-                    delete( self.timer );
-                    error('ACC_Z channel not found')
-                elseif sum(ACC_Z_idx) > 1
-                    stop( self.timer );
-                    delete( self.timer );
-                    error('several ACC_Z channels found')
-                end
-                
-                self.RDA.ACC_X_idx = find(ACC_X_idx);
-                self.RDA.ACC_Y_idx = find(ACC_Y_idx);
-                self.RDA.ACC_Z_idx = find(ACC_Z_idx);
+                self.RDA.L_ACC_X_idx = find(L_ACC_X_idx);
+                self.RDA.L_ACC_Y_idx = find(L_ACC_Y_idx);
+                self.RDA.L_ACC_Z_idx = find(L_ACC_Z_idx);
+                self.RDA.R_ACC_X_idx = find(R_ACC_X_idx);
+                self.RDA.R_ACC_Y_idx = find(R_ACC_Y_idx);
+                self.RDA.R_ACC_Z_idx = find(R_ACC_Z_idx);
                 
                 % Reset block counter to check overflows
                 self.RDA.lastBlock = -1;
@@ -89,34 +69,37 @@ try
                 idx = self.RDA.idx;
                 dataBVA(idx+1:idx+nNewPoints,:) = newdata;
                 
-                newACC = newdata(:,[self.RDA.ACC_X_idx self.RDA.ACC_Y_idx self.RDA.ACC_Z_idx])/1450; % 1450mV = 1g;
+                newACC_L = newdata(:,[self.RDA.L_ACC_X_idx self.RDA.L_ACC_Y_idx self.RDA.L_ACC_Z_idx])/1450; % 1450mV = 1g;
+                newACC_R = newdata(:,[self.RDA.R_ACC_X_idx self.RDA.R_ACC_Y_idx self.RDA.R_ACC_Z_idx])/1450; % 1450mV = 1g;
+                
+                comb_newACC_L = sqrt(sum(newACC_L.^2,2)); % euclidian norm <=== best
+                comb_newACC_R = sqrt(sum(newACC_R.^2,2)); % euclidian norm <=== best
                 
                 self.RDA.slidingACC = circshift(self.RDA.slidingACC,-nNewPoints,1);
-                self.RDA.slidingACC(end-nNewPoints+1 : end, : ) = newACC;
+                self.RDA.slidingACC(end-nNewPoints+1 : end, : ) = [comb_newACC_L comb_newACC_R];
                 
-                combACC = sqrt(sum(self.RDA.slidingACC.^2,2)); % euclidian norm <=== best
+                self.GUIdata.tplot(1).YData = flipud(self.RDA.slidingACC(:,1));
+                self.GUIdata.tplot(2).YData = flipud(self.RDA.slidingACC(:,2));
                 
-                self.GUIdata.tplot.YData = flipud(combACC);
+                window_ACC = self.getWindow(self.RDA.slidingACC,self.fsBVA,self.fftWindow);
                 
-                windowACC_X = self.getWindow(self.RDA.slidingACC(:,1),self.fsBVA,self.fftWindow);
-                windowACC_Y = self.getWindow(self.RDA.slidingACC(:,2),self.fsBVA,self.fftWindow);
-                windowACC_Z = self.getWindow(self.RDA.slidingACC(:,3),self.fsBVA,self.fftWindow);
-                [~        ,power_X] = self.FFT(windowACC_X,self.fsBVA);
-                [~        ,power_Y] = self.FFT(windowACC_Y,self.fsBVA);
-                [frequency,power_Z] = self.FFT(windowACC_Z,self.fsBVA);
+                [frequency,power] = self.FFT(window_ACC,self.fsBVA);
                 
-                power =  mean([power_X(:) power_Y(:) power_Z(:)],2);
-                self.GUIdata.fplot.YData = power;
+                power_L =  power(:,1);
+                power_R =  power(:,2);
                 
                 [~,idx_04hz] = min(abs(frequency-04));
                 [~,idx_06hz] = min(abs(frequency-06));
                 [~,idx_30hz] = min(abs(frequency-30));
                 
-                % newratio = sum(power(idx_04hz:idx_06hz)) / (sum(power(1:idx_04hz-1)) + sum(power(idx_06hz+1:idx_30hz)));
-                newratio = sum(power(idx_04hz:idx_06hz)) / sum(power(1:idx_30hz));
+                newratio_L = sum(power_L(idx_04hz:idx_06hz)) / sum(power_L(1:idx_30hz));
+                newratio_R = sum(power_R(idx_04hz:idx_06hz)) / sum(power_R(1:idx_30hz));
                 self.RDA.ratioPower = circshift(self.RDA.ratioPower,-nNewPoints,1);
-                self.RDA.ratioPower(end-nNewPoints+1 : end, : ) = repmat(newratio,[nNewPoints 1]);
-                self.GUIdata.pplot.YData = flipud(self.RDA.ratioPower);
+                self.RDA.ratioPower(end-nNewPoints+1 : end, : ) = repmat([newratio_L newratio_R],[nNewPoints 1]);
+                
+                ratioPower = flipud( self.RDA.ratioPower );
+                self.GUIdata.pplot(1).YData = ratioPower(:,1);
+                self.GUIdata.pplot(2).YData = ratioPower(:,2);
                 
                 self.RDA.idx = self.RDA.idx + nNewPoints;
                 
