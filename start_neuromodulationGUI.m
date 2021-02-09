@@ -2,7 +2,7 @@ clc
 clear
 
 % params TiePie
-use_tiepie = 0;
+use_tiepie = 1;
 acq_time_tiepie = 70; % in [s]
 % trigger_timeout_tiepie = 10; % in [s]
 
