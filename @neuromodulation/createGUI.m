@@ -471,7 +471,7 @@ handles.radiobutton_ParPort_On = uicontrol( handles.uipanel_ParPortOnOff,...
 %% Panel : Graph
 
 % [[ STREAM ]] [Start] [Stop]
-% 
+%
 % | comments               |
 %  ________________________
 % |aplitude                |
@@ -696,15 +696,18 @@ handles = guidata(hObject);
 switch eventdata.NewValue.Tag
     case 'radiobutton_TiePie_On'
         
-        handles.self.OpenTiePie();
-        
-        handles.edit_acq_time_tipe.Visible = 'On';
-        handles.text_acq_time_tipe.Visible = 'On';
+        try
+            handles.self.OpenTiePie();
+            handles.edit_acq_time_tipe.Visible = 'On';
+            handles.text_acq_time_tipe.Visible = 'On';
+        catch err
+            hObject.SelectedObject = handles.radiobutton_TiePie_Off;
+            rethrow(err);
+        end
         
     case 'radiobutton_TiePie_Off'
         
         handles.self.CloseTiePie();
-        
         handles.edit_acq_time_tipe.Visible = 'Off';
         handles.text_acq_time_tipe.Visible = 'Off';
         
@@ -747,7 +750,6 @@ switch eventdata.NewValue.Tag
     case 'radiobutton_ParPort_On'
         handles.self.OpenParPort();
         handles.pushbutton_TestParPort.Visible = 'On';
-        
     case 'radiobutton_ParPort_Off'
         handles.self.CloseParPort();
         handles.pushbutton_TestParPort.Visible = 'Off';
