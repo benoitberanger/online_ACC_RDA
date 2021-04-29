@@ -6,18 +6,23 @@ classdef neuromodulation < handle
         %------------------------------------------------------------------
         % THIGS TO MODIFY HERE
         
-        maxTime       = 10*60; % s
+        maxTime         = 10*60; % s
         
         % BVA related
-        fsBVA         = 5000;  % Hz
-        ip            = '192.168.18.99';
+        fsBVA           = 5000;  % Hz
+        ip              = '192.168.18.99';
         
         % Figure
-        displaySize   = 20;    % s
-        fftWindow     = 1;     % s
+        displaySize     = 20;    % s
+        fftWindow       = 1;     % s
         
         % Stream
-        refreshPeriod = 0.010; % s
+        refreshPeriod   = 0.010; % s
+        
+        % TiePie
+        acq_time_tiepie = 70;    % s
+        fs_tiepie       = 1e4;   % Hz
+        scp_range       = 4;     % ? unit = volt ?
         
         %------------------------------------------------------------------
         
@@ -93,7 +98,7 @@ classdef neuromodulation < handle
         % set.IP
         function set.ip( self, adress )
             errormsg = 'invalid IP adress : x.x.x.x with x in {0;...;255}';
-                        
+            
             paternIP = '^([0-9]+\.){3}[0-9]+$';
             status = regexp(adress,paternIP,'once');
             if isempty(status)

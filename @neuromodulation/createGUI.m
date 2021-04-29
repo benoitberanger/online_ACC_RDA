@@ -33,22 +33,31 @@ handles.editBGcolor   = [1.0 1.0 1.0];
 %% Panels
 
 panel_x_ratio = 0.2;
-panel_y_ratio = 0.4;
 
 P_setup.x = 0;
 P_setup.w =   panel_x_ratio;
-P_setup.y = 1-panel_y_ratio;
-P_setup.h =   panel_y_ratio;
+P_setup.y = 0.60;
+P_setup.h = 0.40;
 handles.uipanel_Setup = uipanel(handles.(self.GUIname),...
     'Title','Setup',...
     'Units', 'Normalized',...
     'Position',[P_setup.x P_setup.y P_setup.w P_setup.h],...
     'BackgroundColor',handles.figureBGcolor );
 
+P_tiepie.x = 0;
+P_tiepie.w =  panel_x_ratio;
+P_tiepie.y = 0.40;
+P_tiepie.h = 0.20;
+handles.uipanel_TiePie = uipanel(handles.(self.GUIname),...
+    'Title','TiePie',...
+    'Units', 'Normalized',...
+    'Position',[P_tiepie.x P_tiepie.y P_tiepie.w P_tiepie.h],...
+    'BackgroundColor',handles.figureBGcolor );
+
 P_audio.x = 0;
 P_audio.w =   panel_x_ratio;
 P_audio.y = 0;
-P_audio.h = 1-panel_y_ratio;
+P_audio.h = 0.40;
 handles.uipanel_Audio = uipanel(handles.(self.GUIname),...
     'Title','Audio',...
     'Units', 'Normalized',...
@@ -222,6 +231,86 @@ handles.(T_con.tag) = uicontrol( handles.uipanel_Setup,...
     'String','Connect',...
     'Tooltip','Switch On/Off TCPIP connection',...
     'Callback',@toggle_Connection_Callback);
+
+
+%% Panel : TiePie
+
+%
+% TiePie (x) Off ( ) On
+%
+% acq_time_tiepie
+% [             ]
+%
+P_tiepie = Object_pos_width_dispatcher(...
+    [1 2 1 2],...
+    P_tiepie);
+
+% Empty space
+P_tiepie.count = P_tiepie.count+1;
+
+% EDIT : acq_time_tiepie
+P_tiepie.count = P_tiepie.count+1;
+E_acq_time_tiepie.x = obj_x_offcet;
+E_acq_time_tiepie.w = obj_x_width;
+E_acq_time_tiepie.y = P_tiepie.pos  (P_tiepie.count);
+E_acq_time_tiepie.h = P_tiepie.width(P_tiepie.count);
+E_acq_time_tiepie.tag = 'edit_acq_time_tipe';
+handles.(E_acq_time_tiepie.tag) = uicontrol( handles.uipanel_TiePie,...
+    'Style','edit',...
+    'Units', 'Normalized',...
+    'Position',[E_acq_time_tiepie.x E_acq_time_tiepie.y E_acq_time_tiepie.w E_acq_time_tiepie.h],...
+    'String',num2str(self.acq_time_tiepie),...
+    'BackgroundColor',handles.editBGcolor,...
+    'Visible','Off',...
+    'HorizontalAlignment','Left',...
+    'Callback',@edit_acq_time_tipe_Callback);
+
+% TEXT acq_time_tiepie
+P_tiepie.count = P_tiepie.count+1;
+T_acq_time_tiepie.x = obj_x_offcet;
+T_acq_time_tiepie.w = obj_x_width;
+T_acq_time_tiepie.y = P_tiepie.pos  (P_tiepie.count);
+T_acq_time_tiepie.h = P_tiepie.width(P_tiepie.count);
+T_acq_time_tiepie.tag = 'text_acq_time_tipe';
+handles.(T_acq_time_tiepie.tag) = uicontrol( handles.uipanel_TiePie,...
+    'Style','text',...
+    'Units', 'Normalized',...
+    'Position',[T_acq_time_tiepie.x T_acq_time_tiepie.y T_acq_time_tiepie.w T_acq_time_tiepie.h],...
+    'String','acq_time_tiepie (s) :',...
+    'BackgroundColor',handles.figureBGcolor,...
+    'Visible','Off',...
+    'HorizontalAlignment','Left');
+
+% ButtunGroup : TiePie On/Off
+P_tiepie.count = P_tiepie.count+1;
+p_tof.x = obj_x_offcet;
+p_tof.w = obj_x_width;
+p_tof.y = P_tiepie.pos  (P_tiepie.count);
+p_tof.h = P_tiepie.width(P_tiepie.count);
+handles.uipanel_TiePieOnOff = uibuttongroup( handles.uipanel_TiePie, ...
+    'Title','TiePie : On / Off',...
+    'Units', 'Normalized',...
+    'Position',[p_tof.x p_tof.y p_tof.w p_tof.h],...
+    'BackgroundColor',handles.figureBGcolor,...
+    'SelectionChangeFcn',@uipanel_TiePieOnOff_SelectionChangeFcn);
+
+% TiePie : On Off buttons
+handles.radiobutton_TiePie_Off = uicontrol( handles.uipanel_TiePieOnOff,...
+    'Style','radiobutton',...
+    'Units', 'Normalized',...
+    'Position',[obj_x_offcet*2, 0.1, obj_x_width/2 - obj_x_offcet, 0.8],...
+    'String','Off',...
+    'HorizontalAlignment','Center',...
+    'Tag','radiobutton_TiePie_Off',...
+    'BackgroundColor',handles.figureBGcolor);
+handles.radiobutton_TiePie_On = uicontrol( handles.uipanel_TiePieOnOff,...
+    'Style','radiobutton',...
+    'Units', 'Normalized',...
+    'Position',[obj_x_offcet + obj_x_width/2 + obj_x_offcet, 0.1, obj_x_width/2 - obj_x_offcet, 0.8],...
+    'String','On',...
+    'HorizontalAlignment','Center',...
+    'Tag','radiobutton_TiePie_On',...
+    'BackgroundColor',handles.figureBGcolor);
 
 
 %% Panel : Audio
@@ -589,6 +678,30 @@ guidata(hObject, handles);
 end % function
 
 %**************************************************************************
+function uipanel_TiePieOnOff_SelectionChangeFcn(hObject, eventdata)
+handles = guidata(hObject);
+
+switch eventdata.NewValue.Tag
+    case 'radiobutton_TiePie_On'
+        
+        handles.self.OpenTiePie();
+        
+        handles.edit_acq_time_tipe.Visible = 'On';
+        handles.text_acq_time_tipe.Visible = 'On';
+        
+    case 'radiobutton_TiePie_Off'
+        
+        handles.self.CloseTiePie();
+        
+        handles.edit_acq_time_tipe.Visible = 'Off';
+        handles.text_acq_time_tipe.Visible = 'Off';
+        
+end
+
+guidata(hObject, handles);
+end % function
+
+%**************************************************************************
 function uipanel_AudioOnOff_SelectionChangeFcn(hObject, eventdata)
 handles = guidata(hObject);
 
@@ -636,6 +749,18 @@ function pushbutton_TestParPort_Callback(hObject, eventdata)
 handles = guidata(hObject);
 
 handles.self.TestParPort();
+
+guidata(hObject, handles);
+end % function
+
+%**************************************************************************
+function edit_acq_time_tipe_Callback(hObject, eventdata) %#ok<*INUSD>
+handles = guidata(hObject);
+
+acq_time_tiepie = str2double( get(hObject,'String') );
+
+handles.self.acq_time_tiepie = acq_time_tiepie;
+fprintf('[neuromod GUI] : new acq_time_tiepie = %g (s)\n', acq_time_tiepie)
 
 guidata(hObject, handles);
 end % function
