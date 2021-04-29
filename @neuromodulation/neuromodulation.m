@@ -34,6 +34,7 @@ classdef neuromodulation < handle
         GUIname      = 'neuromodulationGUI'
         debug        = 0
         commit_info
+        comments     = ''
         
         isaudioready = 0;
         Audio        = struct

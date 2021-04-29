@@ -26,6 +26,9 @@ if self.use_tiepie
     self.data_tiepie = self.scp.getData();
 end
 
+% get comments from the GUI
+self.comments = self.GUIdata.edit_comments.String;
+
 % save
 save( self.fpath, 'self', 'dataBVA' )
 fprintf('done ! \n')

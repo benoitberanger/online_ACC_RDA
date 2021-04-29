@@ -235,12 +235,11 @@ handles.(T_con.tag) = uicontrol( handles.uipanel_Setup,...
 
 %% Panel : TiePie
 
-%
 % TiePie (x) Off ( ) On
 %
 % acq_time_tiepie
 % [             ]
-%
+
 P_tiepie = Object_pos_width_dispatcher(...
     [1 2 1 2],...
     P_tiepie);
@@ -315,7 +314,6 @@ handles.radiobutton_TiePie_On = uicontrol( handles.uipanel_TiePieOnOff,...
 
 %% Panel : Audio
 
-%
 % Audio (x)Off  ( )On      ParPort (x)Off  ( )On
 %
 % [] TestAudio         [] [] TestParPort      []
@@ -323,7 +321,6 @@ handles.radiobutton_TiePie_On = uicontrol( handles.uipanel_TiePieOnOff,...
 % [] Posture                                  []
 %
 % [] Rest                                     []
-%
 
 
 P_audio = Object_pos_width_dispatcher(...
@@ -474,20 +471,20 @@ handles.radiobutton_ParPort_On = uicontrol( handles.uipanel_ParPortOnOff,...
 %% Panel : Graph
 
 % [[ STREAM ]] [Start] [Stop]
+% 
+% | comments               |
 %  ________________________
 % |aplitude                |
 % |                        |
 % |________________________|
-%
 %  ________________________
 % |power                   |
 % |                        |
 % |________________________|
-%
 
 
 P_graph = Object_pos_width_dispatcher(...
-    [ 1 6  1 6  1 1 ],...
+    [ 1 6  1 6  2 1 ],...
     P_graph );
 
 % Empty space
@@ -520,8 +517,23 @@ handles.(a_timeDomain.tag) = axes('Parent',handles.uipanel_Graph,...
     'Units','Normalized',...
     'Position',[ a_timeDomain.x a_timeDomain.y a_timeDomain.w a_timeDomain.h ]);
 
-% Empty space
+% Text : comments
 P_graph.count = P_graph.count+1;
+E_comments.x = obj_x_offcet;
+E_comments.w = obj_x_width;
+E_comments.y = P_graph.pos  (P_graph.count);
+E_comments.h = P_graph.width(P_graph.count);
+E_comments.tag = 'edit_comments';
+handles.(E_comments.tag) = uicontrol( handles.uipanel_Graph,...
+    'Style','edit',...
+    'Units', 'Normalized',...
+    'Position',[E_comments.x E_comments.y E_comments.w E_comments.h],...
+    'String','',...
+    'TooltipString','insert comments here',...
+    'BackgroundColor',handles.editBGcolor,...
+    'Visible','On',...
+    'Max', Inf,... % unlimited number of lines
+    'HorizontalAlignment','Left');
 
 % Stream
 t = obj_x_width - 2*obj_x_offcet;
