@@ -28,6 +28,7 @@ classdef neuromodulation < handle
         GUIdata
         GUIname      = 'neuromodulationGUI'
         debug        = 0
+        commit_info
         
         isaudioready = 0;
         Audio        = struct
@@ -81,6 +82,7 @@ classdef neuromodulation < handle
             else % Create the figure
                 
                 self.createGUI();
+                self.get_commit_info();
                 
             end
             
