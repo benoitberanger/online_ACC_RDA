@@ -1,22 +1,32 @@
 function OpenTiePie( self )
-%% Path o the libs
+%% Path from Thomas
+
 addpath(genpath('fichiers_thomas'))
 
-parentdir = fileparts(fileparts(fileparts(which('neuromodulation'))));
 
+%% Path of the TiePie libs
+
+parentdir = fileparts(fileparts(fileparts(which('neuromodulation'))));
 addpath(fullfile(parentdir,'matlab-libtiepie'));
+
+res = dir(fullfile(parentdir,'libtiepie-*'));
+assert(~isempty(res),'no "libtiepie-*" found in %s', parentdir)
+
 if ispc
-    addpath(fullfile(parentdir,'libtiepie-0.9.10.WindowsNT-x86-64'));
-    addpath(fullfile(parentdir,'libtiepie-0.9.10.WindowsNT-x86-64','C'));
+    platform = 'WindowsNT';
 elseif isunix
-    addpath(fullfile(parentdir,'libtiepie-0.9.10.GNULinux-x86-64'));
-    addpath(fullfile(parentdir,'libtiepie-0.9.10.GNULinux-x86-64','C'));
+    platform = 'GNULinux';
 else
     error('??')
 end
+idx = find(contains({res.name},platform));
+assert(~isempty(idx), 'no libtiepie-*%s* found in %s', platform, parentdir)
+
+addpath(fullfile(parentdir,res(idx).name));
+addpath(fullfile(parentdir,res(idx).name,'C'));
 
 
-%% Init TiePie
+%% Init TiePie for INSIGHTEC
 
 w = instrfind;
 if ~isempty(w)
@@ -45,7 +55,7 @@ clear triggerInput;
 
 %% Save
 
-self.scp = scp;
+self.scp = scp; % @Oscilloscope object (from libtiepie)
 self.use_tiepie = 1;
 
 
