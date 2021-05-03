@@ -774,6 +774,7 @@ handles = guidata(hObject);
 acq_time_tiepie = str2double( get(hObject,'String') );
 
 handles.self.acq_time_tiepie = acq_time_tiepie;
+handles.self.scp.RecordLength = round(handles.self.fs_tiepie *  handles.self.acq_time_tiepie);
 fprintf('[neuromod GUI] : new acq_time_tiepie = %g (s)\n', acq_time_tiepie)
 
 guidata(hObject, handles);

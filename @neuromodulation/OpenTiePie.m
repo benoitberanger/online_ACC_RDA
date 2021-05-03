@@ -1,5 +1,11 @@
 function OpenTiePie( self )
+
+fprintf('[neuromodulation.%s]: opening TiePie... \n', mfilename)
+
+
 %% Path from Thomas
+
+fprintf('[neuromodulation.%s]: adding path... \n', mfilename)
 
 addpath(genpath('fichiers_thomas'))
 
@@ -28,11 +34,13 @@ addpath(fullfile(parentdir,res(idx).name,'C'));
 
 %% Init TiePie for INSIGHTEC
 
-w = instrfind;
-if ~isempty(w)
-    fclose(w); delete(w);
-end
-clear w;
+fprintf('[neuromodulation.%s]: opening TiePie device... \n', mfilename)
+
+% w = instrfind;
+% if ~isempty(w)
+%     fclose(w); delete(w);
+% end
+% clear w;
 
 scp = setdefault_scp_INSIGHTEC('SamplingFrequency', self.fs_tiepie, ...
     'AcquisitionTime', self.acq_time_tiepie, 'ScopeRange', self.scp_range);
@@ -57,6 +65,8 @@ clear triggerInput;
 
 self.scp = scp; % @Oscilloscope object (from libtiepie)
 self.use_tiepie = 1;
+
+fprintf('[neuromodulation.%s]: ... done \n', mfilename)
 
 
 end % function
