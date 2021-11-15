@@ -597,7 +597,7 @@ handles.tplot = plot(handles.axes_timeDomain, timeDomain.X, timeDomain.Y);
 handles.axes_timeDomain.XLabel.String = 'time (s)';
 handles.axes_timeDomain.YLabel.String = 'Acceleration (g)';
 handles.axes_timeDomain.YLim = [0 5];
-legend(handles.axes_timeDomain,{'L'; 'R'})
+legend(handles.axes_timeDomain,{'R'; 'L'})
 
 % powerDomain
 powerDomain.X = timeDomain.X;
@@ -606,7 +606,7 @@ handles.pplot = plot(handles.axes_powerDomain, powerDomain.X, powerDomain.Y);
 handles.axes_powerDomain.XLabel.String = 'time (s)';
 handles.axes_powerDomain.YLabel.String = 'power[4-6]Hz ratio';
 handles.axes_powerDomain.YLim = [0 0.5];
-legend(handles.axes_powerDomain,{'L'; 'R'})
+legend(handles.axes_powerDomain,{'R'; 'L'})
 
 
 %% Set keys

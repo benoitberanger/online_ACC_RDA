@@ -1,4 +1,3 @@
-clc
 clear
 
 addpath( fullfile( fileparts(pwd), 'vis_stim_prisma_neuromod'                               ) )
@@ -7,4 +6,3 @@ addpath( fullfile( fileparts(pwd), 'vis_stim_prisma_neuromod', 'external_lib', '
 
 nm = neuromodulation();
 disp(nm)
-

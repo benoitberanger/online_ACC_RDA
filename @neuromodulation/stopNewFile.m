@@ -29,12 +29,12 @@ end
 
 scp = struct(self.scp); %#ok<NASGU>
 
+% get comments from the GUI
+self.comments = self.GUIdata.edit_comments.String;
+
 % save
 save( self.fpath, 'self', 'dataBVA', 'scp' )
 fprintf('done ! \n')
-
-% get comments from the GUI
-self.comments = self.GUIdata.edit_comments.String;
 
 
 %% Quick analyze & plot

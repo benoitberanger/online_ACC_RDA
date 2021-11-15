@@ -78,8 +78,8 @@ try
                 self.RDA.slidingACC = circshift(self.RDA.slidingACC,-nNewPoints,1);
                 self.RDA.slidingACC(end-nNewPoints+1 : end, : ) = [comb_newACC_L comb_newACC_R];
                 
-                self.GUIdata.tplot(1).YData = flipud(self.RDA.slidingACC(:,1));
-                self.GUIdata.tplot(2).YData = flipud(self.RDA.slidingACC(:,2));
+                self.GUIdata.tplot(1).YData = flipud(self.RDA.slidingACC(:,2));
+                self.GUIdata.tplot(2).YData = flipud(self.RDA.slidingACC(:,1));
                 
                 window_ACC = self.getWindow(self.RDA.slidingACC,self.fsBVA,self.fftWindow);
                 
@@ -98,8 +98,8 @@ try
                 self.RDA.ratioPower(end-nNewPoints+1 : end, : ) = repmat([newratio_L newratio_R],[nNewPoints 1]);
                 
                 ratioPower = flipud( self.RDA.ratioPower );
-                self.GUIdata.pplot(1).YData = ratioPower(:,1);
-                self.GUIdata.pplot(2).YData = ratioPower(:,2);
+                self.GUIdata.pplot(1).YData = ratioPower(:,2);
+                self.GUIdata.pplot(2).YData = ratioPower(:,1);
                 
                 self.RDA.idx = self.RDA.idx + nNewPoints;
                 
