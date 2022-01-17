@@ -604,8 +604,8 @@ powerDomain.X = timeDomain.X;
 powerDomain.Y = timeDomain.Y;
 handles.pplot = plot(handles.axes_powerDomain, powerDomain.X, powerDomain.Y);
 handles.axes_powerDomain.XLabel.String = 'time (s)';
-handles.axes_powerDomain.YLabel.String = 'power[4-6]Hz ratio';
-handles.axes_powerDomain.YLim = [0 0.5];
+handles.axes_powerDomain.YLabel.String = 'power[4-12]Hz';
+handles.axes_powerDomain.YLim = [0 2.5];
 legend(handles.axes_powerDomain,{'R'; 'L'})
 
 
