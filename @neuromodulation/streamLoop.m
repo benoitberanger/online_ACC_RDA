@@ -89,10 +89,11 @@ try
                 power_R =  power(:,2);
                 
                 [~,idx_04hz] = min(abs(frequency-04));
-                [~,idx_12hz] = min(abs(frequency-06));
+                [~,idx_12hz] = min(abs(frequency-12));
+                [~,idx_30hz] = min(abs(frequency-30));
                 
-                newratio_L = sum(power_L(idx_04hz:idx_12hz));
-                newratio_R = sum(power_R(idx_04hz:idx_12hz));
+                newratio_L = sum(abs(power_L(idx_04hz:idx_12hz)))/sum(abs(power_L(1:idx_30hz)));
+                newratio_R = sum(abs(power_R(idx_04hz:idx_12hz)))/sum(abs(power_R(1:idx_30hz)));
                 self.RDA.ratioPower = circshift(self.RDA.ratioPower,-nNewPoints,1);
                 self.RDA.ratioPower(end-nNewPoints+1 : end, : ) = repmat([newratio_L newratio_R],[nNewPoints 1]);
                 
